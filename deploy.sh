@@ -6,7 +6,8 @@ hexo clean
 hexo g
 cd  ../jojo23333.github.io
 git pull
-mv  -rf ../Blog/public/*  ./
+rm  -rf ./*
+mv  -f ../Blog/public/*  ./
 git add -A
 git commit -m"Update"
 git push origin master
