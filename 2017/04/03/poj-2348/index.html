@@ -71,7 +71,7 @@
 <link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="随想," />
+  <meta name="keywords" content="题解,博弈论," />
 
 
 
@@ -87,22 +87,16 @@
 
 
 
-<meta name="description" content="会困扰吗，会尴尬吗，还是…会有些许的高兴呢..  
-   回忆中，三叶一个人踏上去东京的电车时候，到底是怎样一种心情呢  
-   最喜欢的一首">
+<meta name="description" content="题意分析题目给出了两个正数a.b每次操作，大的数减掉小的数的整数倍。一个数变为0 的时候结束。谁先先把其中一个数减为0的获胜。问谁可以赢。Stan是先手。假设两个数为a,b（a&amp;gt;=b)如果a==b.那么肯定是先手获胜。一步就可以减为0,b如果a%b==0.就是a是b的倍数，那么也是先手获胜。如果a&amp;gt;=2b.  那么   那个人肯定知道a%b,b是必胜态还是必败态。如果是必败态，先手将a">
 <meta property="og:type" content="article">
-<meta property="og:title" content="三葉のテーマ">
-<meta property="og:url" content="http://yoursite.com/2017/03/15/三葉/index.html">
+<meta property="og:title" content="poj-2348">
+<meta property="og:url" content="http://yoursite.com/2017/04/03/poj-2348/index.html">
 <meta property="og:site_name" content="JonassenLi">
-<meta property="og:description" content="会困扰吗，会尴尬吗，还是…会有些许的高兴呢..  
-   回忆中，三叶一个人踏上去东京的电车时候，到底是怎样一种心情呢  
-   最喜欢的一首">
-<meta property="og:updated_time" content="2017-03-24T17:48:13.088Z">
+<meta property="og:description" content="题意分析题目给出了两个正数a.b每次操作，大的数减掉小的数的整数倍。一个数变为0 的时候结束。谁先先把其中一个数减为0的获胜。问谁可以赢。Stan是先手。假设两个数为a,b（a&amp;gt;=b)如果a==b.那么肯定是先手获胜。一步就可以减为0,b如果a%b==0.就是a是b的倍数，那么也是先手获胜。如果a&amp;gt;=2b.  那么   那个人肯定知道a%b,b是必胜态还是必败态。如果是必败态，先手将a">
+<meta property="og:updated_time" content="2017-04-04T11:42:43.611Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="三葉のテーマ">
-<meta name="twitter:description" content="会困扰吗，会尴尬吗，还是…会有些许的高兴呢..  
-   回忆中，三叶一个人踏上去东京的电车时候，到底是怎样一种心情呢  
-   最喜欢的一首">
+<meta name="twitter:title" content="poj-2348">
+<meta name="twitter:description" content="题意分析题目给出了两个正数a.b每次操作，大的数减掉小的数的整数倍。一个数变为0 的时候结束。谁先先把其中一个数减为0的获胜。问谁可以赢。Stan是先手。假设两个数为a,b（a&amp;gt;=b)如果a==b.那么肯定是先手获胜。一步就可以减为0,b如果a%b==0.就是a是b的倍数，那么也是先手获胜。如果a&amp;gt;=2b.  那么   那个人肯定知道a%b,b是必胜态还是必败态。如果是必败态，先手将a">
 
 
 
@@ -130,13 +124,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2017/03/15/三葉/"/>
+  <link rel="canonical" href="http://yoursite.com/2017/04/03/poj-2348/"/>
 
 
 
 
 
-  <title> 三葉のテーマ | JonassenLi </title>
+  <title> poj-2348 | JonassenLi </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="">
@@ -265,7 +259,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/03/15/三葉/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/04/03/poj-2348/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="muchenli">
@@ -286,7 +280,7 @@
             
             
               
-                三葉のテーマ
+                poj-2348
               
             
           </h1>
@@ -301,8 +295,8 @@
               
                 <span class="post-meta-item-text">Veröffentlicht am</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-03-15T23:53:53+08:00">
-                2017-03-15
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-04-03T16:37:52+08:00">
+                2017-04-03
               </time>
             
 
@@ -324,8 +318,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/说说/" itemprop="url" rel="index">
-                    <span itemprop="name">说说</span>
+                  <a href="/categories/acm/" itemprop="url" rel="index">
+                    <span itemprop="name">ACM</span>
                   </a>
                 </span>
 
@@ -359,10 +353,8 @@
       
 
       
-        <p>   会困扰吗，会尴尬吗，还是…会有些许的高兴呢..  </p>
-<p>   回忆中，三叶一个人踏上去东京的电车时候，到底是怎样一种心情呢  </p>
-<p>   最喜欢的一首 </p>
-
+        <h3 id="题意分析"><a href="#题意分析" class="headerlink" title="题意分析"></a>题意分析</h3><p>题目给出了两个正数a.b<br>每次操作，大的数减掉小的数的整数倍。一个数变为0 的时候结束。<br>谁先先把其中一个数减为0的获胜。问谁可以赢。Stan是先手。<br>假设两个数为a,b（a&gt;=b)<br>如果a==b.那么肯定是先手获胜。一步就可以减为0,b<br>如果a%b==0.就是a是b的倍数，那么也是先手获胜。<br>如果a&gt;=2<em>b.  那么   那个人肯定知道a%b,b是必胜态还是必败态。如果是必败态，先手将a,b变成a%b,b,那么先手肯定赢。如果是必胜态，先手将a,b变成a%b+b,b.那么对手只有将这两个数变成a%b,b,先手获胜。<br>如果是b&lt;a&lt;2</em>b  那么只有一条路：变成a-b,b  (这个时候0<a-b<b).这样一直下去看谁先面对上面的必胜状态。 所以假如面对b="" <="" a="" <2*b的状态，就先一步一步走下去。直到面对一个a%b="=0" ||="">=2*b的状态。  </a-b<b).这样一直下去看谁先面对上面的必胜状态。></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;cstdio&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;cstring&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;algorithm&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> LL long long </span></div><div class="line"></div><div class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> N,M;</div><div class="line">	<span class="keyword">while</span>(~<span class="built_in">scanf</span>(<span class="string">"%d%d"</span>,&amp;N,&amp;M))</div><div class="line">	&#123;</div><div class="line">		<span class="keyword">if</span>(M==<span class="number">0</span> &amp;&amp; N==<span class="number">0</span>)	<span class="keyword">break</span>;</div><div class="line">		<span class="keyword">int</span> a = max(N,M);</div><div class="line">		<span class="keyword">int</span> b = min(N,M);</div><div class="line">		<span class="keyword">int</span> nflag = <span class="number">0</span>;</div><div class="line">		<span class="keyword">if</span>(a%b==<span class="number">0</span>||a/b&gt;=<span class="number">2</span>)</div><div class="line">			nflag = <span class="number">0</span>;</div><div class="line">		<span class="keyword">else</span>&#123;</div><div class="line">			<span class="keyword">while</span>(b)&#123;</div><div class="line">				<span class="keyword">if</span>(a%b==<span class="number">0</span>||a/b&gt;=<span class="number">2</span>)	<span class="keyword">break</span>;</div><div class="line">				a = a-b;</div><div class="line">				swap(a,b);</div><div class="line">				nflag ^=<span class="number">1</span>;</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">		<span class="keyword">if</span>(!nflag)</div><div class="line">			<span class="built_in">puts</span>(<span class="string">"Stan wins"</span>);</div><div class="line">		<span class="keyword">else</span></div><div class="line">			<span class="built_in">puts</span>(<span class="string">"Ollie wins"</span>);</div><div class="line">			</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
       
     </div>
 
@@ -385,7 +377,9 @@
       
         <div class="post-tags">
           
-            <a href="/tags/随想/" rel="tag"># 随想</a>
+            <a href="/tags/题解/" rel="tag"># 题解</a>
+          
+            <a href="/tags/博弈论/" rel="tag"># 博弈论</a>
           
         </div>
       
@@ -398,8 +392,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/03/13/poj-1061/" rel="next" title="poj-1061 扩展欧几里得">
-                <i class="fa fa-chevron-left"></i> poj-1061 扩展欧几里得
+              <a href="/2017/04/03/组合博弈与SG函数/" rel="next" title="组合博弈与SG函数">
+                <i class="fa fa-chevron-left"></i> 组合博弈与SG函数
               </a>
             
           </div>
@@ -407,10 +401,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2017/03/16/asm-learning-note/" rel="prev" title="asm_learning_note">
-                asm_learning_note <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -457,8 +447,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Inhaltsverzeichnis
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Übersicht
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel sidebar-panel-active">
+      <section class="site-overview sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/cat.jpg"
@@ -531,6 +530,22 @@
 
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#题意分析"><span class="nav-number">1.</span> <span class="nav-text">题意分析</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
