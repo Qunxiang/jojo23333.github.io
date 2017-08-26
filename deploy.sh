@@ -8,6 +8,7 @@ cd  ../jojo23333.github.io
 git pull
 rm  -rf ./*
 mv  -f ../Blog/public/*  ./
+echo jonassenli.com > CNAME #Used for costom sitename
 git add -A
 git commit -m"Update"
 git push origin master
