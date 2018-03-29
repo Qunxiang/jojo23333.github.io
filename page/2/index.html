@@ -260,7 +260,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/20/acm/markdown/math/素数线性筛法/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/27/acm/题解/图论/Uva-11354 最小瓶颈树+LCA倍增法维护最大值/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="muchenli">
@@ -282,8 +282,149 @@
             
               
                 
-                <a class="post-title-link" href="/2017/08/20/acm/markdown/math/素数线性筛法/" itemprop="url">
-                  素数线性筛法
+                <a class="post-title-link" href="/2017/08/27/acm/题解/图论/Uva-11354 最小瓶颈树+LCA倍增法维护最大值/" itemprop="url">
+                  Uva-11354 最小瓶颈树+LCA倍增法维护最大值
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-08-27T12:03:34+08:00">
+                2017-08-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">in</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/acm/" itemprop="url" rel="index">
+                    <span itemprop="name">ACM</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="Uva-11354"><a href="#Uva-11354" class="headerlink" title="Uva-11354"></a>Uva-11354</h1><p>题意：<br>给你一个无向图，N个节点M条边，边权为d，对Q组询问a b,问能取到的从a到b路径上的最小值。</p>
+<p>题解：<br>首先总是要取最小的值，则可以先用kruskal求最小生成树（也就是最小瓶颈树），即在树上求任意两点之间路径边权值的最小值。可以用倍增求解LCA的方法，<strong>在保存p[i][j]（节点i的向上2^i个祖先） 的同时维护mlen[i][j]（节点i向上2^i条边的最大值）</strong></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div><div class="line">171</div><div class="line">172</div></pre></td><td class="code"><pre><div class="line">#include &lt;iostream&gt;</div><div class="line">#include &lt;cstdio&gt;</div><div class="line">#include &lt;cctype&gt;</div><div class="line">#include &lt;algorithm&gt;</div><div class="line">#include &lt;cstring&gt;</div><div class="line">#include &lt;string&gt;</div><div class="line">#include &lt;cmath&gt;</div><div class="line">#include &lt;vector&gt;</div><div class="line">#include &lt;set&gt;</div><div class="line">#include &lt;stack&gt;</div><div class="line">#include &lt;sstream&gt;</div><div class="line">#include &lt;queue&gt;</div><div class="line">#include &lt;map&gt;</div><div class="line">#include &lt;functional&gt;</div><div class="line">#include &lt;bitset&gt;</div><div class="line"></div><div class="line">using namespace std;</div><div class="line">#define pb push_back</div><div class="line">#define mk make_pair</div><div class="line">#define ll long long</div><div class="line">#define ull unsigned long long</div><div class="line">#define pii pair&lt;int, int&gt;</div><div class="line">#define mkp make_pair</div><div class="line">#define fst first</div><div class="line">#define scd second</div><div class="line">#define ALL(A) A.begin(), A.end()</div><div class="line">#define REP(i,n) for(int (i)=0;(i)&lt;(int)(n);(i)++)</div><div class="line">#define REP1(i, n) for(int (i)=1;(i)&lt;=(int)(n);(i)++)</div><div class="line">#define fastio ios::sync_with_stdio(0), cin.tie(0)</div><div class="line">#define frein freopen("in.txt", "r", stdin)</div><div class="line">#define freout freopen("out.txt", "w", stdout)</div><div class="line">#define freout1 freopen("out1.txt", "w", stdout)</div><div class="line">#define PI M_PI</div><div class="line">#define MAXN 100000</div><div class="line">#define xork(a,b) ((b&amp;1)?(a):(0))</div><div class="line">#define sc(n) scanf("%d",&amp;(n))</div><div class="line"></div><div class="line">ll mod = 10000;</div><div class="line">ll INF = 1LL&lt;&lt;60LL;</div><div class="line">const double eps = 1e-8;</div><div class="line">template&lt;typename T&gt; T gcd(T a,T b)</div><div class="line">&#123;if(!b)return a;return gcd(b,a%b);&#125;</div><div class="line">struct edge&#123;</div><div class="line">    int from,to;</div><div class="line">    int v;</div><div class="line">    bool operator&lt;(const edge &amp;a)const&#123;</div><div class="line">        return v&lt;a.v;</div><div class="line">    &#125;</div><div class="line">&#125;;</div><div class="line"></div><div class="line">vector&lt;edge&gt; E;</div><div class="line">vector&lt;vector&lt;pii&gt; &gt;G(MAXN);</div><div class="line">int d[MAXN],len[MAXN];</div><div class="line">int p[MAXN][20],mlen[MAXN][20];</div><div class="line">int f[MAXN];</div><div class="line">int N,M;</div><div class="line"></div><div class="line">int getf(int v)&#123;</div><div class="line">    if(f[v]==v) return v;</div><div class="line">    else return f[v] = getf(f[v]);</div><div class="line">&#125;</div><div class="line"></div><div class="line">bool Merge(int v1,int v2)&#123;</div><div class="line">    int f1 = getf(v1);</div><div class="line">    int f2 = getf(v2);</div><div class="line">    if(f1 == f2)&#123;</div><div class="line">        return false;</div><div class="line">    &#125;</div><div class="line">    f[f1] = f2;</div><div class="line">    return true;</div><div class="line">&#125;</div><div class="line"></div><div class="line">void kruskal()</div><div class="line">&#123;</div><div class="line">    for(int i=0; i&lt;=N; i++)</div><div class="line">        f[i] = i;</div><div class="line">    int cnt = 0;</div><div class="line">    for(int i=0; i&lt;E.size(); i++)&#123;</div><div class="line">        if(cnt&gt;=N-1)    break;</div><div class="line">        int f = E[i].from;</div><div class="line">        int t = E[i].to;</div><div class="line">        if(Merge(f,t))&#123;</div><div class="line">            cnt++;</div><div class="line">            G[f].pb(mkp(t,E[i].v));</div><div class="line">            G[t].pb(mkp(f,E[i].v));</div><div class="line">//            cout&lt;&lt;f&lt;&lt;" "&lt;&lt;t&lt;&lt;" "&lt;&lt;E[i].v&lt;&lt;endl;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">void dfs(int v,int pre,int depth)</div><div class="line">&#123;</div><div class="line">    d[v] = depth;</div><div class="line">    for(int i=0; i&lt;G[v].size(); i++)&#123;</div><div class="line">        int t = G[v][i].first;</div><div class="line">        int val = G[v][i].second;</div><div class="line">        if(t==pre)  continue;</div><div class="line">        dfs(t,v,depth+1);</div><div class="line">        //len[t] = val;</div><div class="line">        p[t][0] = v;</div><div class="line">        mlen[t][0] = val;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">void lca_init(int n)</div><div class="line">&#123;</div><div class="line">//    for(int i=1; i&lt;=n; i++)</div><div class="line">//        printf("mlen[%d][0] = %d\n",i,mlen[i][0]);</div><div class="line">    for(int j=1; (1&lt;&lt;j)&lt;=n; j++)&#123;</div><div class="line">        for(int i=1; i&lt;=n; i++)&#123;</div><div class="line">            p[i][j] = p[p[i][j-1]][j-1];</div><div class="line">            mlen[i][j] = max(mlen[i][j-1],mlen[p[i][j-1]][j-1]);</div><div class="line">            //printf("mlen[%d][%d] = %d\n",i,j,mlen[i][j]);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">int query(int a,int b)</div><div class="line">&#123;</div><div class="line">    //printf("Query a:%d b%d\n",a,b);</div><div class="line">    if(d[a]&gt;d[b])  swap(a,b);</div><div class="line">    int f = d[b] - d[a];</div><div class="line">    int maxe = -1;</div><div class="line">    for(int i=0; (1&lt;&lt;i)&lt;=f; i++)</div><div class="line">        if(f&amp;(1&lt;&lt;i))&#123;</div><div class="line">            maxe = max(maxe,mlen[b][i]);</div><div class="line">            b = p[b][i];</div><div class="line">        &#125;</div><div class="line">    //printf("maxe = %d\n",maxe);</div><div class="line">    if(a!=b)&#123;</div><div class="line">        for(int i=(int)log2(N);i&gt;=0; i--)&#123;</div><div class="line">            if(p[a][i]!=p[b][i])&#123;</div><div class="line">                maxe = max(maxe,max(mlen[b][i],mlen[a][i]));</div><div class="line">                a = p[a][i];    b = p[b][i];</div><div class="line">            &#125;</div><div class="line">            //printf("maxe = %d\n",maxe);</div><div class="line">        &#125;</div><div class="line">        maxe = max(maxe,mlen[a][0]);    //和求LCA不同，这里要同时对两个节点更新最大值</div><div class="line">        maxe = max(maxe,mlen[b][0]);</div><div class="line">        //printf("a = %d  maxe = %d\n",a,maxe);</div><div class="line">    &#125;</div><div class="line">    return maxe;</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main()</div><div class="line">&#123;</div><div class="line">    //freout;</div><div class="line">    bool flag = false;</div><div class="line">    while(~scanf("%d%d",&amp;N,&amp;M))&#123;</div><div class="line">        if(flag) puts("");</div><div class="line">        flag = true;</div><div class="line">        E.clear();</div><div class="line">        for(int i=1; i&lt;=N; i++)</div><div class="line">            G[i].clear();</div><div class="line">        for(int i=0; i&lt;M; i++)&#123;</div><div class="line">            edge t;</div><div class="line">            scanf("%d%d%d",&amp;t.from,&amp;t.to,&amp;t.v);</div><div class="line">            E.pb(t);</div><div class="line">        &#125;</div><div class="line">        sort(E.begin(),E.end());</div><div class="line">        kruskal();</div><div class="line">        dfs(1,-1,0);</div><div class="line">        lca_init(N);</div><div class="line">        int Q;</div><div class="line">        sc(Q);</div><div class="line">        for(int i=0; i&lt;Q; i++)&#123;</div><div class="line">            int a,b;</div><div class="line">            sc(a); sc(b);</div><div class="line">            printf("%d\n",query(a,b));</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/20/acm/markdown/数据结构/稀疏表/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="muchenli">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/cat.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JonassenLi">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/08/20/acm/markdown/数据结构/稀疏表/" itemprop="url">
+                  稀疏表
                 </a>
               
             
@@ -359,7 +500,8 @@
       
         
           
-            <p>时间复杂度O（N）<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">bool</span> isprime[<span class="number">10000005</span>];</div><div class="line"><span class="keyword">int</span> prime[<span class="number">1000004</span>];</div><div class="line"><span class="keyword">int</span> cnt = <span class="number">0</span>;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">sift</span><span class="params">(<span class="keyword">int</span> n)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="built_in">memset</span>(isprime,<span class="literal">true</span>,<span class="keyword">sizeof</span>(isprime));</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">2</span>; i&lt;=n; i++)&#123;</div><div class="line"></div><div class="line">        <span class="keyword">if</span>(isprime[i])</div><div class="line">            prime[cnt++] = i;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> j=<span class="number">0</span>; j&lt;cnt&amp;&amp;prime[j]*i&lt;=n; j++)&#123;</div><div class="line">            isprime[prime[j]*i] = <span class="literal">false</span>;</div><div class="line">            <span class="keyword">if</span>(i%prime[j]==<span class="number">0</span>) <span class="keyword">break</span>;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+            <h2 id="Spared-Table-（用于解决多种RMQ问题）"><a href="#Spared-Table-（用于解决多种RMQ问题）" class="headerlink" title="Spared Table （用于解决多种RMQ问题）"></a>Spared Table （用于解决多种RMQ问题）</h2><p>模板：<br>（解决区间极小值）<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/*</span></div><div class="line">ST用来O（nlogn）时间预处理，O（1）时间查询最大最小值</div><div class="line">*/</div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span>  </span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;math.h&gt;</span>  </span></div><div class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;  </div><div class="line">  </div><div class="line"><span class="comment">/*方程 </span></div><div class="line">F[i,j]:区间[i,i + 2^j - 1]的最小值，此时区间长度为2^j </div><div class="line">F[i,j] = min(F[i,j - 1],F[i + 2^(j - 1),j - 1]) </div><div class="line">F[i,0] = nArr[i];*/  </div><div class="line">  </div><div class="line"><span class="keyword">const</span> <span class="keyword">int</span> MAXN = <span class="number">10010</span>;</div><div class="line"><span class="keyword">int</span> rmq[<span class="number">2</span>*MAXN];<span class="comment">//rmq数组,就是欧拉序列对应的深度序列</span></div><div class="line">  </div><div class="line"><span class="keyword">struct</span> ST</div><div class="line">&#123;</div><div class="line">    <span class="keyword">int</span> mm[<span class="number">2</span>*MAXN];<span class="comment">//意思是向下取log2(k)</span></div><div class="line">    <span class="keyword">int</span> dp[<span class="number">2</span>*MAXN][<span class="number">20</span>];<span class="comment">//最小值对应的下标</span></div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">init</span><span class="params">(<span class="keyword">int</span> n)</span></span></div><div class="line">    &#123;</div><div class="line">        mm[<span class="number">0</span>] = <span class="number">-1</span>;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>;i &lt;= n;i++)</div><div class="line">        &#123;</div><div class="line">            mm[i] = ((i&amp;(i<span class="number">-1</span>)) == <span class="number">0</span>)?mm[i<span class="number">-1</span>]+<span class="number">1</span>:mm[i<span class="number">-1</span>];</div><div class="line">            dp[i][<span class="number">0</span>] = i;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> j = <span class="number">1</span>; j &lt;= mm[n];j++)</div><div class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>; i + (<span class="number">1</span>&lt;&lt;j) - <span class="number">1</span> &lt;= n; i++)</div><div class="line">                dp[i][j] = rmq[dp[i][j<span class="number">-1</span>]] &lt;</div><div class="line">                rmq[dp[i+(<span class="number">1</span>&lt;&lt;(j<span class="number">-1</span>))][j<span class="number">-1</span>]]?dp[i][j<span class="number">-1</span>]:dp[i+(<span class="number">1</span>&lt;&lt;(j<span class="number">-1</span>))][j<span class="number">-1</span>];</div><div class="line">    &#125;</div><div class="line">    <span class="function"><span class="keyword">int</span> <span class="title">query</span><span class="params">(<span class="keyword">int</span> a,<span class="keyword">int</span> b)</span><span class="comment">//查询[a,b]之间最小值的下标</span></span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">if</span>(a &gt; b)swap(a,b);</div><div class="line">        <span class="keyword">int</span> k = mm[b-a+<span class="number">1</span>];</div><div class="line">        <span class="keyword">return</span> rmq[dp[a][k]] &lt;= </div><div class="line">        rmq[dp[b-(<span class="number">1</span>&lt;&lt;k)+<span class="number">1</span>][k]]?dp[a][k]:dp[b-(<span class="number">1</span>&lt;&lt;k)+<span class="number">1</span>][k];</div><div class="line">    &#125;</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p>例：hdu-5726 解决区间最小公倍数</p>
 
           
         
@@ -550,7 +692,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/20/acm/markdown/数据结构/稀疏表/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/20/acm/markdown/math/素数线性筛法/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="muchenli">
@@ -572,8 +714,8 @@
             
               
                 
-                <a class="post-title-link" href="/2017/08/20/acm/markdown/数据结构/稀疏表/" itemprop="url">
-                  稀疏表
+                <a class="post-title-link" href="/2017/08/20/acm/markdown/math/素数线性筛法/" itemprop="url">
+                  素数线性筛法
                 </a>
               
             
@@ -649,9 +791,172 @@
       
         
           
-            <h2 id="Spared-Table-（用于解决多种RMQ问题）"><a href="#Spared-Table-（用于解决多种RMQ问题）" class="headerlink" title="Spared Table （用于解决多种RMQ问题）"></a>Spared Table （用于解决多种RMQ问题）</h2><p>模板：<br>（解决区间极小值）<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/*</span></div><div class="line">ST用来O（nlogn）时间预处理，O（1）时间查询最大最小值</div><div class="line">*/</div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span>  </span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;math.h&gt;</span>  </span></div><div class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;  </div><div class="line">  </div><div class="line"><span class="comment">/*方程 </span></div><div class="line">F[i,j]:区间[i,i + 2^j - 1]的最小值，此时区间长度为2^j </div><div class="line">F[i,j] = min(F[i,j - 1],F[i + 2^(j - 1),j - 1]) </div><div class="line">F[i,0] = nArr[i];*/  </div><div class="line">  </div><div class="line"><span class="keyword">const</span> <span class="keyword">int</span> MAXN = <span class="number">10010</span>;</div><div class="line"><span class="keyword">int</span> rmq[<span class="number">2</span>*MAXN];<span class="comment">//rmq数组,就是欧拉序列对应的深度序列</span></div><div class="line">  </div><div class="line"><span class="keyword">struct</span> ST</div><div class="line">&#123;</div><div class="line">    <span class="keyword">int</span> mm[<span class="number">2</span>*MAXN];<span class="comment">//意思是向下取log2(k)</span></div><div class="line">    <span class="keyword">int</span> dp[<span class="number">2</span>*MAXN][<span class="number">20</span>];<span class="comment">//最小值对应的下标</span></div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">init</span><span class="params">(<span class="keyword">int</span> n)</span></span></div><div class="line">    &#123;</div><div class="line">        mm[<span class="number">0</span>] = <span class="number">-1</span>;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>;i &lt;= n;i++)</div><div class="line">        &#123;</div><div class="line">            mm[i] = ((i&amp;(i<span class="number">-1</span>)) == <span class="number">0</span>)?mm[i<span class="number">-1</span>]+<span class="number">1</span>:mm[i<span class="number">-1</span>];</div><div class="line">            dp[i][<span class="number">0</span>] = i;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> j = <span class="number">1</span>; j &lt;= mm[n];j++)</div><div class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>; i + (<span class="number">1</span>&lt;&lt;j) - <span class="number">1</span> &lt;= n; i++)</div><div class="line">                dp[i][j] = rmq[dp[i][j<span class="number">-1</span>]] &lt;</div><div class="line">                rmq[dp[i+(<span class="number">1</span>&lt;&lt;(j<span class="number">-1</span>))][j<span class="number">-1</span>]]?dp[i][j<span class="number">-1</span>]:dp[i+(<span class="number">1</span>&lt;&lt;(j<span class="number">-1</span>))][j<span class="number">-1</span>];</div><div class="line">    &#125;</div><div class="line">    <span class="function"><span class="keyword">int</span> <span class="title">query</span><span class="params">(<span class="keyword">int</span> a,<span class="keyword">int</span> b)</span><span class="comment">//查询[a,b]之间最小值的下标</span></span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">if</span>(a &gt; b)swap(a,b);</div><div class="line">        <span class="keyword">int</span> k = mm[b-a+<span class="number">1</span>];</div><div class="line">        <span class="keyword">return</span> rmq[dp[a][k]] &lt;= </div><div class="line">        rmq[dp[b-(<span class="number">1</span>&lt;&lt;k)+<span class="number">1</span>][k]]?dp[a][k]:dp[b-(<span class="number">1</span>&lt;&lt;k)+<span class="number">1</span>][k];</div><div class="line">    &#125;</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
-<p>例：hdu-5726 解决区间最小公倍数</p>
+            <p>时间复杂度O（N）<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">bool</span> isprime[<span class="number">10000005</span>];</div><div class="line"><span class="keyword">int</span> prime[<span class="number">1000004</span>];</div><div class="line"><span class="keyword">int</span> cnt = <span class="number">0</span>;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">sift</span><span class="params">(<span class="keyword">int</span> n)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="built_in">memset</span>(isprime,<span class="literal">true</span>,<span class="keyword">sizeof</span>(isprime));</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">2</span>; i&lt;=n; i++)&#123;</div><div class="line"></div><div class="line">        <span class="keyword">if</span>(isprime[i])</div><div class="line">            prime[cnt++] = i;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> j=<span class="number">0</span>; j&lt;cnt&amp;&amp;prime[j]*i&lt;=n; j++)&#123;</div><div class="line">            isprime[prime[j]*i] = <span class="literal">false</span>;</div><div class="line">            <span class="keyword">if</span>(i%prime[j]==<span class="number">0</span>) <span class="keyword">break</span>;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
 
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/20/acm/markdown/math/欧拉函数/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="muchenli">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/cat.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JonassenLi">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/08/20/acm/markdown/math/欧拉函数/" itemprop="url">
+                  欧拉函数及一些性质
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-08-20T12:03:34+08:00">
+                2017-08-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">in</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/acm/" itemprop="url" rel="index">
+                    <span itemprop="name">ACM</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="唯一分解定理"><a href="#唯一分解定理" class="headerlink" title="唯一分解定理"></a>唯一分解定理</h2><h2 id="欧拉函数的一些性质"><a href="#欧拉函数的一些性质" class="headerlink" title="欧拉函数的一些性质"></a>欧拉函数的一些性质</h2><p><strong>一些公式</strong>  </p>
+<ol>
+<li><p>若p q互质则有  </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">phi(N)=phi(p)*phi(q)  </div><div class="line"></div><div class="line">(N=p*q)</div></pre></td></tr></table></figure>
+</li>
+<li><p>当b是质数，a%b=0 则</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">phi(ab) = phi(a)*b</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p><strong>递推式</strong><br>对于质数p满足p|x</p>
+<ol>
+<li><p>若p^2|x不成立,因x/p互质故有：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">phi(x)=phi(x/p)*(p-1)</div></pre></td></tr></table></figure>
+</li>
+<li><p>若p^2|x成立,p|(x/p)且p为质数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">phi(x)=phi(x/p)*p</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p><strong>公式求欧拉函数：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">phi(N) = n*(1+1/p1)(1+1/p2)...(1+1/pk)</div></pre></td></tr></table></figure>
+<p>其中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">N = p1^a*p2^b*...pk^x</div></pre></td></tr></table></figure>
+<p>因而可以写出如下的代码用公式求欧拉函数值<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">1</span>; i&lt;=MAXN; i++)</div><div class="line">    phi[i] = i;</div><div class="line"><span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">2</span>; i&lt;=MAXN; i++)</div><div class="line">    <span class="keyword">if</span>(phi[i]==i)&#123;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> j=i; j&lt;=MAXN; j+=i)</div><div class="line">            phi[j] = phi[j]/i*(i<span class="number">-1</span>);</div><div class="line">    &#125;</div></pre></td></tr></table></figure></p>
+<p><strong>lightoj-1370:</strong> </p>
+<pre><code>结论： phi(x)~x之间一定存在一个质数
+</code></pre>
           
         
       
@@ -1426,272 +1731,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/03/22/acm/题解/HDU-5667/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/cat.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="JonassenLi">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/03/22/acm/题解/HDU-5667/" itemprop="url">
-                  HDU-5667 矩阵快速幂&费马小定理
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Veröffentlicht am</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-03-22T12:36:35+08:00">
-                2017-03-22
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">in</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/acm/" itemprop="url" rel="index">
-                    <span itemprop="name">ACM</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>做题新遇到的知识点，暂时未ac 先markdown</p>
-<h2 id="快速幂"><a href="#快速幂" class="headerlink" title="快速幂"></a>快速幂</h2><p>见算法概论p22  </p>
-<h3 id="大致思想"><a href="#大致思想" class="headerlink" title="大致思想"></a>大致思想</h3><p>求 a^b mod N 时，从a mod N 开始不断对结果进行平方后迭代。然后把N对应二进制位为1的地方相乘，实际上是借助了：<br><strong>a^b = a^(2^k1+2^k2+….)</strong><br>的思想</p>
-<h2 id="费马小定理"><a href="#费马小定理" class="headerlink" title="费马小定理"></a>费马小定理</h2><p>当gcd(a,p)=1 且P为质数的时候有： </p>
-<p><strong>(p-1)mod p=1</strong></p>
-<h2 id="HDU-5667"><a href="#HDU-5667" class="headerlink" title="HDU-5667"></a>HDU-5667</h2><h3 id="题解"><a href="#题解" class="headerlink" title="题解"></a>题解</h3><p>这一题实际上就是对递推式log然后转化为矩阵快速幂求f(n)时a的幂</p>
-<h3 id="要点"><a href="#要点" class="headerlink" title="要点"></a>要点</h3><ol>
-<li>从递推式到矩阵要注意，仔细观察递推式，矩阵的维数要恰当</li>
-<li>注意在快速幂的时候模（p-1）</li>
-</ol>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/03/16/asm-learning-note/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/cat.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="JonassenLi">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/03/16/asm-learning-note/" itemprop="url">
-                  asm_learning_note
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Veröffentlicht am</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-03-16T10:10:32+08:00">
-                2017-03-16
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1741,7 +1780,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">23</span>
+                <span class="site-state-item-count">25</span>
                 <span class="site-state-item-name">Artikel</span>
               </a>
             </div>
@@ -1763,7 +1802,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-count">26</span>
                 <span class="site-state-item-name">Tags</span>
               </a>
             </div>
@@ -1816,7 +1855,7 @@
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2017</span>
+  <span itemprop="copyrightYear">2018</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

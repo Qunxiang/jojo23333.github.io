@@ -1,0 +1,742 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="tensorflow," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="TensorFlow 学习笔记 #1TensorFlow BasicsGraphs and Sessions首先，需要和普通python程序区别出来的是，tensorflow将计算的定义和具体执行过程分离开来，个人认为这有点像函数式中的求值运算。  
+不过tensorflow的特点在于其把所依赖的所有计算转换成一个数据流图（dag）
+
+
+根据输入构成数据流图
+创建会话，执行操作
+
+用图的优点有如下">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TensorFlow 学习笔记">
+<meta property="og:url" content="http://yoursite.com/2018/03/26/machinelearning/tensorflow_notes/note1/index.html">
+<meta property="og:site_name" content="JonassenLi">
+<meta property="og:description" content="TensorFlow 学习笔记 #1TensorFlow BasicsGraphs and Sessions首先，需要和普通python程序区别出来的是，tensorflow将计算的定义和具体执行过程分离开来，个人认为这有点像函数式中的求值运算。  
+不过tensorflow的特点在于其把所依赖的所有计算转换成一个数据流图（dag）
+
+
+根据输入构成数据流图
+创建会话，执行操作
+
+用图的优点有如下">
+<meta property="og:image" content="http://yoursite.com/./img/tensor_data_flow_graph.png">
+<meta property="og:updated_time" content="2018-03-29T15:00:47.986Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="TensorFlow 学习笔记">
+<meta name="twitter:description" content="TensorFlow 学习笔记 #1TensorFlow BasicsGraphs and Sessions首先，需要和普通python程序区别出来的是，tensorflow将计算的定义和具体执行过程分离开来，个人认为这有点像函数式中的求值运算。  
+不过tensorflow的特点在于其把所依赖的所有计算转换成一个数据流图（dag）
+
+
+根据输入构成数据流图
+创建会话，执行操作
+
+用图的优点有如下">
+<meta name="twitter:image" content="http://yoursite.com/./img/tensor_data_flow_graph.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/03/26/machinelearning/tensorflow_notes/note1/"/>
+
+
+
+
+
+  <title> TensorFlow 学习笔记 | JonassenLi </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JonassenLi</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Startseite
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Kategorien
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archiv
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/26/machinelearning/tensorflow_notes/note1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="muchenli">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/cat.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JonassenLi">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                TensorFlow 学习笔记
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-26T10:10:32+08:00">
+                2018-03-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="TensorFlow-学习笔记-1"><a href="#TensorFlow-学习笔记-1" class="headerlink" title="TensorFlow 学习笔记 #1"></a>TensorFlow 学习笔记 #1</h1><h2 id="TensorFlow-Basics"><a href="#TensorFlow-Basics" class="headerlink" title="TensorFlow Basics"></a>TensorFlow Basics</h2><h3 id="Graphs-and-Sessions"><a href="#Graphs-and-Sessions" class="headerlink" title="Graphs and Sessions"></a>Graphs and Sessions</h3><p>首先，需要和普通python程序区别出来的是，tensorflow将计算的定义和具体执行过程分离开来，个人认为这有点像函数式中的求值运算。  </p>
+<p>不过tensorflow的特点在于其把所依赖的所有计算转换成一个数据流图（dag）</p>
+<p><img src="./img/tensor_data_flow_graph.png" alt="数据流图"></p>
+<ol>
+<li>根据输入构成数据流图</li>
+<li>创建会话，执行操作</li>
+</ol>
+<p>用图的优点有如下几个：  </p>
+<ol>
+<li>能够保存计算结果。只会运行你所期望得到值的子图。</li>
+<li>易于分布任务，进行分布式的计算</li>
+<li>Break computation into small, differential pieces to facilitate auto-differentiation</li>
+<li>Many common machine learning models are taught and visualized as directed graphs</li>
+</ol>
+<p><strong>何为TensorFlow?</strong><br><strong>Tensor</strong>: An n-dimensional array<br>0-d tensor: scalar (number)<br>1-d tensor: vector<br>2-d tensor: matrix  </p>
+<h2 id="Tensorflow-ops"><a href="#Tensorflow-ops" class="headerlink" title="Tensorflow ops"></a>Tensorflow ops</h2><h3 id="TensorBorad"><a href="#TensorBorad" class="headerlink" title="TensorBorad"></a>TensorBorad</h3><p>Tensorborad 使用通过将图的节点信息和图中的操作记入event files当中来完成整个流程的可视化，使用如下代码创建event files以及停止记录<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># use tf.get_default_graph() to get default graph</span></div><div class="line">writer = tf.summary.FileWriter([logdir], [graph])</div><div class="line"><span class="comment"># ...</span></div><div class="line">writer.close()</div></pre></td></tr></table></figure></p>
+<p>之后运行python代码并打开tensorboard<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ python3 [my_program.py] </div><div class="line">$ tensorboard --logdir=<span class="string">"./graphs"</span> --port 6006</div></pre></td></tr></table></figure></p>
+<p>但是我们此时看到的图每个节点我们无法对上名字，这就要在定义图的时候给出其的名字<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">a = tf.constant(<span class="number">2</span>, name=<span class="string">"a"</span>)</div><div class="line">b = tf.constant(<span class="number">2</span>, name=<span class="string">"b"</span>)</div><div class="line">x = tf.add(a, b, name=<span class="string">"add"</span>)</div></pre></td></tr></table></figure></p>
+<h3 id="Some-useful-tricks"><a href="#Some-useful-tricks" class="headerlink" title="Some useful tricks"></a>Some useful tricks</h3><h4 id="查看protobuf"><a href="#查看protobuf" class="headerlink" title="查看protobuf"></a>查看protobuf</h4><p>常数存储在函数的定义当中，通过查看图的protobuf(protocol buffer)来查看图定义当中的内容。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> tensorflow <span class="keyword">as</span> tf</div><div class="line"></div><div class="line">my_const = tf.constant([<span class="number">1.0</span>, <span class="number">2.0</span>], name=<span class="string">"my_const"</span>)</div><div class="line">print(tf.get_default_graph().as_graph_def())</div></pre></td></tr></table></figure></p>
+<p>Output :<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">node &#123;</div><div class="line">  name: "my_const"</div><div class="line">  op: "Const"</div><div class="line">  attr &#123;</div><div class="line">    key: "dtype"</div><div class="line">    value &#123;</div><div class="line">      type: DT_FLOAT</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">  attr &#123;</div><div class="line">    key: "value"</div><div class="line">    value &#123;</div><div class="line">      tensor &#123;</div><div class="line">        dtype: DT_FLOAT</div><div class="line">        tensor_shape &#123;</div><div class="line">          dim &#123;</div><div class="line">            size: 2</div><div class="line">          &#125;</div><div class="line">        &#125;</div><div class="line">        tensor_content: "\000\000\200?\000\000\000@"</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line">versions &#123;</div><div class="line">  producer: 24</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="变量的声明和初始化"><a href="#变量的声明和初始化" class="headerlink" title="变量的声明和初始化"></a>变量的声明和初始化</h4><p>为了变量共享的方便 官方推荐使用tf.get_variable方法<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">s = tf.get_variable(<span class="string">"scalar"</span>, initializer=tf.constant(<span class="number">2</span>)) </div><div class="line">m = tf.get_variable(<span class="string">"matrix"</span>, initializer=tf.constant([[<span class="number">0</span>, <span class="number">1</span>], [<span class="number">2</span>, <span class="number">3</span>]]))</div><div class="line">W = tf.get_variable(<span class="string">"big_matrix"</span>, shape=(<span class="number">784</span>, <span class="number">10</span>), initializer=tf.zeros_initializer())</div></pre></td></tr></table></figure></p>
+<p>同时可以较简单的初始化变量<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">with</span> tf.Session() <span class="keyword">as</span> sess:</div><div class="line">	sess.run(tf.global_variables_initializer())</div></pre></td></tr></table></figure></p>
+<h4 id="Assign-a-variable"><a href="#Assign-a-variable" class="headerlink" title="Assign a variable"></a>Assign a variable</h4><p>观察如下程序<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">W = tf.Variable(<span class="number">10</span>)</div><div class="line">W.assign(<span class="number">100</span>)</div><div class="line"><span class="keyword">with</span> tf.Session() <span class="keyword">as</span> sess:</div><div class="line">	sess.run(W.initializer)</div><div class="line">	print(W.eval()) <span class="comment"># &gt;&gt; 10</span></div></pre></td></tr></table></figure></p>
+<p>结果输出是10，但为什么不是100呢。注意的是，之前也说过，tensorflow的声明和运行是分离的，W.assign(100)创建了一个assign操作，但是我们并没有运行它，所以应该按照如下写<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">W = tf.Variable(<span class="number">10</span>)</div><div class="line">assign_op = W.assign(<span class="number">100</span>)</div><div class="line"><span class="keyword">with</span> tf.Session() <span class="keyword">as</span> sess:</div><div class="line">	sess.run(assign_op)</div><div class="line">	print(W.eval()) <span class="comment"># &gt;&gt; 100</span></div></pre></td></tr></table></figure></p>
+<h4 id="Sessions"><a href="#Sessions" class="headerlink" title="Sessions"></a>Sessions</h4><p>会话独自保存值，因而假如有两个不同的会话对同一个变量进行操作，其得到最终的值也有可能不相同。<br>有时候为了方便可以使用interactive session来隐式地run session<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">sess = tf.InteractiveSession()</div><div class="line">a = tf.constant(<span class="number">5.0</span>)</div><div class="line">b = tf.constant(<span class="number">6.0</span>)</div><div class="line">c = a * b</div><div class="line">print(c.eval()) <span class="comment"># we can use 'c.eval()' without explicitly stating a session</span></div><div class="line">sess.close()</div></pre></td></tr></table></figure></p>
+<p>tf.get_default_session()返回当前进程的默认session</p>
+<h4 id="the-trap-of-lazy-loading"><a href="#the-trap-of-lazy-loading" class="headerlink" title="the trap of lazy loading"></a>the trap of lazy loading</h4><p>考虑如下代码有什么不好的地方<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">x = tf.Variable(10, name=&apos;x&apos;)</div><div class="line">y = tf.Variable(20, name=&apos;y&apos;)</div><div class="line"></div><div class="line">with tf.Session() as sess:</div><div class="line">	sess.run(tf.global_variables_initializer())</div><div class="line">	writer = tf.summary.FileWriter(&apos;graphs/lazy_loading&apos;, sess.graph)</div><div class="line">	for _ in range(10):</div><div class="line">		sess.run(tf.add(x, y))</div><div class="line">	print(tf.get_default_graph().as_graph_def()) </div><div class="line">	writer.close()</div></pre></td></tr></table></figure></p>
+<p>sess.run(tf.add(x, y))这一句会将tf.add(x,y)这个操作创建10次，造成网络的大量冗余<br>考虑解决方案：</p>
+<ol>
+<li>总是将操作的定义与执行分离开来</li>
+<li>使用python的@property来保证你的函数只被调用一次</li>
+</ol>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/tensorflow/" rel="tag"># tensorflow</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/09/22/开关反转问题/" rel="next" title="开关反转问题">
+                <i class="fa fa-chevron-left"></i> 开关反转问题
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Inhaltsverzeichnis
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Übersicht
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/cat.jpg"
+               alt="muchenli" />
+          <p class="site-author-name" itemprop="name">muchenli</p>
+           
+              <p class="site-description motion-element" itemprop="description">salty fish jojo23333's personal page</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">25</span>
+                <span class="site-state-item-name">Artikel</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">Kategorien</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">26</span>
+                <span class="site-state-item-name">Tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/jojo23333" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#TensorFlow-学习笔记-1"><span class="nav-number">1.</span> <span class="nav-text">TensorFlow 学习笔记 #1</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#TensorFlow-Basics"><span class="nav-number">1.1.</span> <span class="nav-text">TensorFlow Basics</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Graphs-and-Sessions"><span class="nav-number">1.1.1.</span> <span class="nav-text">Graphs and Sessions</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tensorflow-ops"><span class="nav-number">1.2.</span> <span class="nav-text">Tensorflow ops</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#TensorBorad"><span class="nav-number">1.2.1.</span> <span class="nav-text">TensorBorad</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Some-useful-tricks"><span class="nav-number">1.2.2.</span> <span class="nav-text">Some useful tricks</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#查看protobuf"><span class="nav-number">1.2.2.1.</span> <span class="nav-text">查看protobuf</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#变量的声明和初始化"><span class="nav-number">1.2.2.2.</span> <span class="nav-text">变量的声明和初始化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Assign-a-variable"><span class="nav-number">1.2.2.3.</span> <span class="nav-text">Assign a variable</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Sessions"><span class="nav-number">1.2.2.4.</span> <span class="nav-text">Sessions</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#the-trap-of-lazy-loading"><span class="nav-number">1.2.2.5.</span> <span class="nav-text">the trap of lazy loading</span></a></li></ol></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">muchenli</span>
+</div>
+
+
+<div class="powered-by">
+  Erstellt mit  <a class="theme-link" href="https://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>
