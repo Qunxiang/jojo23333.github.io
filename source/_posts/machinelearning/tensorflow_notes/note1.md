@@ -1,7 +1,8 @@
 ---
-title: TensorFlow 学习笔记 #1
+title: TensorFlow 学习笔记1 
 date: 2018-03-26 10:10:32
 tags: [tensorflow]
+mathjax: true
 ---
 # TensorFlow 学习笔记 #1
 ## TensorFlow Basics
@@ -10,7 +11,7 @@ tags: [tensorflow]
 
 不过tensorflow的特点在于其把所依赖的所有计算转换成一个数据流图（dag）
 
-![数据流图](./img/tensor_data_flow_graph.png)
+![数据流图](./images/tf/tensor_data_flow_graph.png)
 
 1. 根据输入构成数据流图
 2. 创建会话，执行操作
