@@ -260,6 +260,758 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/15/machinelearning/tensorflow_notes/style_transfer/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="muchenli">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/cat.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JonassenLi">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/04/15/machinelearning/tensorflow_notes/style_transfer/" itemprop="url">
+                  Image Style Transfer based on CNN
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-04-15T20:18:00+08:00">
+                2018-04-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="实验提要"><a href="#实验提要" class="headerlink" title="实验提要"></a>实验提要</h2><p>刚做完CS20的assignmet 2，因为是第一个tensorflow项目，虽然很多不知道怎么做借鉴了别人的代码，整个代码框架大致是搞懂了，姑且留个记录。</p>
+<p>整个实验基本上是对<a href="https://arxiv.org/pdf/1508.06576.pdf" target="_blank" rel="external">A Neural Algorithm of Artistic Style</a><br>这篇文章的一个实现。实验提供了一些框架代码，可以在<a href="https://github.com/chiphuyen/stanford-tensorflow-tutorials/tree/master/assignments/02_style_transfer" target="_blank" rel="external">git上这里</a>找到</p>
+<h2 id="原论文以及主要观点"><a href="#原论文以及主要观点" class="headerlink" title="原论文以及主要观点"></a>原论文以及主要观点</h2><h3 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h3><p>A Neural Algorithm of Artistic Style 这篇文章发表2016，还算比较新的文章。<br>文章的主要点在于它发现了在CNN当中图片的内容和图片的风格是可以分离的，因而可以独立的处理这些表示生成新的有意义的图片（虽然我也没完全弄懂他的意思），原文如下：</p>
+<blockquote>
+<p>“The key finding of this paper is that the representations of content and style in the Convolutional Neural Network are separable. That is, we can manipulate both representations independently to produce new, perceptually meaningful images.”</p>
+</blockquote>
+<h3 id="VGG-Network-结构"><a href="#VGG-Network-结构" class="headerlink" title="VGG-Network 结构"></a>VGG-Network 结构</h3><p>文章使用的实现方法基于VGG-Network，在cs231n的<a href="http://cs231n.github.io/convolutional-networks/" target="_blank" rel="external">这个课件</a>里有对VGG-Net的简要介绍    </p>
+<blockquote>
+<p>VGGNet. The runner-up in ILSVRC 2014 was the network from Karen Simonyan and Andrew Zisserman that became known as the VGGNet. Its main contribution was in showing that the depth of the network is a critical component for good performance. Their final best network contains 16 CONV/FC layers and, appealingly, <strong>features an extremely homogeneous architecture that only performs 3x3 convolutions and 2x2 pooling from the beginning to the end.</strong> Their pretrained model is available for plug and play use in Caffe. A downside of the VGGNet is that it is more expensive to evaluate and uses a lot more memory and parameters (140M). Most of these parameters are in the first fully connected layer, and it was since found that these FC layers can be removed with no performance downgrade, significantly reducing the number of necessary parameters.</p>
+</blockquote>
+<p>VGGnet的网络参数如图所示  </p>
+<p><img src="./images/tf/VGGNet.png" alt="VGGNet achitecture"></p>
+<h3 id="基于VGGnet-的实现"><a href="#基于VGGnet-的实现" class="headerlink" title="基于VGGnet 的实现"></a>基于VGGnet 的实现</h3><p>文章使用了VGGNet当中的16层卷积层和5层pooling层,去掉了全连接层，并使用average pooling策略替换max pooling策略</p>
+<h4 id="lose-function"><a href="#lose-function" class="headerlink" title="lose function"></a>lose function</h4><p>关于怎么定义loss function,想法比较自然<br>在图像内容附近通过白噪声初始化一个输出的结果，然后通过网络对这个结果进行风格和内容两方面的约束进行修正。<br><strong>content loss</strong><br>设置一个白点噪声的初始图像和原图像输入网络，在某一层的输出$l$处,F和P分别为其特征表述，则取其方差为content loss</p>
+<p>$$ L_{content}(\vec p,\vec x, l) = \frac{1}{2}\sum_{i,j}(F_{ij}^{l}-P_{ij}^{l})^2 $$</p>
+<p><strong>Gram矩阵</strong></p>
+<p>Gram Matrix实际上可看做是feature之间的偏心协方差矩阵（即没有减去均值的协方差矩阵）<br>协方差矩阵可写成：</p>
+<p>$$ \sum  = E[(X-E(X))(X-E(X))^T]$$<br>Gram矩阵可写成</p>
+<p>$$ G = A * A^{T} $$</p>
+<p><strong>style loss</strong>  </p>
+<p>在CNN每一层反馈的基础上，对每一层的激励结果求其Gram矩阵,同样是对生成图像和原图像，在某一层l生成的两个Gram矩阵G、A<br>这一层loss贡献为：</p>
+<p>$$ E_l = \frac{1}{4N_l^2M_l^2}\sum_{i,j}(G_{ij}^l-A_{ij}^l)^2$$</p>
+<p>对每一层的loss进行加权求和，得到总的loss为</p>
+<p>$$ L_{style}(\vec a,\vec x) = \sum_{l=0}^Lw_lE_l$$</p>
+<p>给定content loss和style loss分别的权重为$\alpha$和$\beta$，总的优化目标为</p>
+<p>$$ L_{total}(\vec p,\vec a,\vec x)=\alpha L_{content}(\vec p,\vec x)+\beta L_{style}(\vec a,\vec x)$$</p>
+<p><strong>思考</strong><br>有关于为什么要使用gram matrix来度量风格，当同一个维度上面的值相乘的时候原来越小酒变得更小，原来越大就变得越大，二不同维度上的关系也在相乘的表达当中表示出来,因而gram matrix能有效度量各个维度自己的特性以及各个维度之间的关系</p>
+<h2 id="基于tensorflow的实现"><a href="#基于tensorflow的实现" class="headerlink" title="基于tensorflow的实现"></a>基于tensorflow的实现</h2><h3 id="代码框架"><a href="#代码框架" class="headerlink" title="代码框架"></a>代码框架</h3><ul>
+<li>utils.py  一些辅助函数</li>
+<li>load_vgg.py  从已经训练好的参数当中加载vggnet</li>
+<li>style_transfer.py 构建风格转化的模型</li>
+</ul>
+<h3 id="load-vgg-py"><a href="#load-vgg-py" class="headerlink" title="load_vgg.py"></a>load_vgg.py</h3><p>这个模块中的主要任务是搭建vggnet，在load方法当中调用conv2d_relu生成卷积层，调用avgpool生成pooling层<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">conv2d_relu</span><span class="params">(self, prev_layer, layer_idx, layer_name)</span>:</span></div><div class="line">    <span class="keyword">with</span> tf.variable_scope(layer_name):</div><div class="line">                w, b = self._weights(layer_idx, layer_name)</div><div class="line">                w = tf.constant(w, name=<span class="string">"weight"</span>)</div><div class="line">                b = tf.constant(b, name=<span class="string">"bais"</span>)</div><div class="line">                conv2d = tf.nn.conv2d(input = prev_layer,</div><div class="line">                                    filter = w,</div><div class="line">                                    strides = [<span class="number">1</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">1</span>],</div><div class="line">                                    padding = <span class="string">"SAME"</span>,</div><div class="line">                                    name = layer_name)</div><div class="line">                out = tf.nn.relu(conv2d + b)</div><div class="line">        setattr(self, layer_name, out)</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">avgpool</span><span class="params">(self, prev_layer, layer_name)</span>:</span></div><div class="line"></div><div class="line">        <span class="keyword">with</span> tf.variable_scope(layer_name):</div><div class="line">            out = tf.nn.avg_pool(prev_layer,</div><div class="line">                                ksize=[<span class="number">1</span>,<span class="number">2</span>,<span class="number">2</span>,<span class="number">1</span>],</div><div class="line">                                strides=[<span class="number">1</span>,<span class="number">2</span>,<span class="number">2</span>,<span class="number">1</span>],</div><div class="line">                                padding=<span class="string">"SAME"</span>)</div><div class="line"></div><div class="line">        setattr(self, layer_name, out)</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">load</span><span class="params">(self)</span>:</span></div><div class="line">        self.conv2d_relu(self.input_img, <span class="number">0</span>, <span class="string">'conv1_1'</span>)</div><div class="line">        self.conv2d_relu(self.conv1_1, <span class="number">2</span>, <span class="string">'conv1_2'</span>)</div><div class="line">        self.avgpool(self.conv1_2, <span class="string">'avgpool1'</span>)</div><div class="line">        self.conv2d_relu(self.avgpool1, <span class="number">5</span>, <span class="string">'conv2_1'</span>)</div><div class="line">        self.conv2d_relu(self.conv2_1, <span class="number">7</span>, <span class="string">'conv2_2'</span>)</div><div class="line">        self.avgpool(self.conv2_2, <span class="string">'avgpool2'</span>)</div><div class="line">        self.conv2d_relu(self.avgpool2, <span class="number">10</span>, <span class="string">'conv3_1'</span>)</div><div class="line">        self.conv2d_relu(self.conv3_1, <span class="number">12</span>, <span class="string">'conv3_2'</span>)</div><div class="line">        self.conv2d_relu(self.conv3_2, <span class="number">14</span>, <span class="string">'conv3_3'</span>)</div><div class="line">        self.conv2d_relu(self.conv3_3, <span class="number">16</span>, <span class="string">'conv3_4'</span>)</div><div class="line">        self.avgpool(self.conv3_4, <span class="string">'avgpool3'</span>)</div><div class="line">        self.conv2d_relu(self.avgpool3, <span class="number">19</span>, <span class="string">'conv4_1'</span>)</div><div class="line">        self.conv2d_relu(self.conv4_1, <span class="number">21</span>, <span class="string">'conv4_2'</span>)</div><div class="line">        self.conv2d_relu(self.conv4_2, <span class="number">23</span>, <span class="string">'conv4_3'</span>)</div><div class="line">        self.conv2d_relu(self.conv4_3, <span class="number">25</span>, <span class="string">'conv4_4'</span>)</div><div class="line">        self.avgpool(self.conv4_4, <span class="string">'avgpool4'</span>)</div><div class="line">        self.conv2d_relu(self.avgpool4, <span class="number">28</span>, <span class="string">'conv5_1'</span>)</div><div class="line">        self.conv2d_relu(self.conv5_1, <span class="number">30</span>, <span class="string">'conv5_2'</span>)</div><div class="line">        self.conv2d_relu(self.conv5_2, <span class="number">32</span>, <span class="string">'conv5_3'</span>)</div><div class="line">        self.conv2d_relu(self.conv5_3, <span class="number">34</span>, <span class="string">'conv5_4'</span>)</div><div class="line">        self.avgpool(self.conv5_4, <span class="string">'avgpool5'</span>)</div></pre></td></tr></table></figure></p>
+<p>有关conv2d的参数解释见之前笔记和<a href="https://www.tensorflow.org/api_docs/python/tf/nn/conv2d" target="_blank" rel="external">这里</a></p>
+<h3 id="style-transfer"><a href="#style-transfer" class="headerlink" title="style_transfer"></a>style_transfer</h3><p>总体分为两部，第一步创建tensorflow图结构，这其中包括：</p>
+<ol>
+<li>使用create_input创建空白图作为输入</li>
+<li>加载vggnet结构</li>
+<li>创建loss</li>
+<li>根据loss创建optimizer</li>
+<li>创建统计数据<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">build</span><span class="params">(self)</span>:</span></div><div class="line">    self.create_input()</div><div class="line">    self.load_vgg()</div><div class="line">    self.losses()</div><div class="line">    self.optimize()</div><div class="line">    self.create_summary()</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>第二步执行训练:  </p>
+<ol>
+<li>初始化全局变量sess.run(tf.global_variables_initializer())</li>
+<li>创建FileWriter (用于TensorBoard)</li>
+<li>创建输入  sess.run(self.input_img.assign(self.initial_img))</li>
+<li>创建checkpoint检查是否要恢复</li>
+<li>循环迭代n次</li>
+<li>最优化opt</li>
+<li>每特定次循环计算保存summary，保存断点<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">train</span><span class="params">(self, n_iters)</span>:</span></div><div class="line">    skip_step = <span class="number">1</span></div><div class="line">    <span class="keyword">with</span> tf.Session() <span class="keyword">as</span> sess:</div><div class="line">        <span class="comment"># 1. initialize</span></div><div class="line">        sess.run(tf.global_variables_initializer())</div><div class="line">        <span class="comment"># 2. create writer</span></div><div class="line">        writer = tf.summary.FileWriter(<span class="string">"graphs/style_transfer"</span>, sess.graph)</div><div class="line">        <span class="comment"># 3. assign input</span></div><div class="line">        sess.run(self.input_img.assign(self.initial_img))</div><div class="line">        <span class="comment"># 4. create checkpoint &amp; restore previous</span></div><div class="line">        saver = tf.train.Saver()</div><div class="line">        ckpt = tf.train.get_checkpoint_state(os.path.dirname(<span class="string">'checkpoints/style_transfer/checkpoint'</span>))</div><div class="line">        <span class="keyword">if</span> ckpt <span class="keyword">and</span> ckpt.model_checkpoint_path:</div><div class="line">            saver.restore(sess, ckpt.model_checkpoint_path)</div><div class="line"></div><div class="line">        initial_step = self.gstep.eval()</div><div class="line">        start_time = time.time()</div><div class="line">        <span class="comment"># 5. iterate for n_iters time</span></div><div class="line">        <span class="keyword">for</span> index <span class="keyword">in</span> range(initial_step, n_iters):</div><div class="line">            <span class="keyword">if</span> index &gt;= <span class="number">5</span> <span class="keyword">and</span> index &lt; <span class="number">20</span>:</div><div class="line">                skip_step = <span class="number">10</span></div><div class="line">            <span class="keyword">elif</span> index &gt;= <span class="number">20</span>:</div><div class="line">                skip_step = <span class="number">20</span></div><div class="line">            <span class="comment"># 6. run optimization</span></div><div class="line">            sess.run(self.opt)</div><div class="line">            <span class="comment"># 7. add summary info \ save checkpoint every number of certain layers</span></div><div class="line">            <span class="keyword">if</span> (index + <span class="number">1</span>) % skip_step == <span class="number">0</span>:</div><div class="line">                gen_image, total_loss, summary = sess.run([self.input_img,</div><div class="line">                                                        self.total_loss,</div><div class="line">                                                        self.summary_op])</div><div class="line">                gen_image = gen_image + self.vgg.mean_pixels </div><div class="line">                writer.add_summary(summary, global_step=index)</div><div class="line">            <span class="comment">#...</span></div><div class="line">            <span class="keyword">if</span> (index + <span class="number">1</span>) % <span class="number">20</span> == <span class="number">0</span>:</div><div class="line">                saver.save (sess, <span class="string">'checkpoints/style_stranfer/style_transfer'</span>, index)</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<h3 id="个人在做完之后的一点思考"><a href="#个人在做完之后的一点思考" class="headerlink" title="个人在做完之后的一点思考"></a>个人在做完之后的一点思考</h3><p>首先这个任务和传统的学习任务不一样。这次学习的对象是需要生成的图像，待生成的图像像素点作为变量在最优化的时候同时被训练。而网络的模型采用他人训练好的参数。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/12/machinelearning/tensorflow_notes/note_CNN/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="muchenli">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/cat.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JonassenLi">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/04/12/machinelearning/tensorflow_notes/note_CNN/" itemprop="url">
+                  Convolutional Nerual Networks for Visual Recongnition
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-04-12T22:58:00+08:00">
+                2018-04-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="Convolutional-Nerual-Networks-CNNs-ConvNets"><a href="#Convolutional-Nerual-Networks-CNNs-ConvNets" class="headerlink" title="Convolutional Nerual Networks (CNNs/ConvNets)"></a>Convolutional Nerual Networks (CNNs/ConvNets)</h1><h2 id="Over-view"><a href="#Over-view" class="headerlink" title="Over view"></a>Over view</h2><h3 id="引入"><a href="#引入" class="headerlink" title="引入"></a>引入</h3><p>首先为啥会有CNN这个东西呢？<br>一个普通的神经网络的示意图如下所示<br><img src="./images/tf/simple_neural_net.jpeg" alt=""><br>可见，这种神经网络层与层之间是全连接的，对于minist这种数据集使用，假设输入图像为32<em>32</em>3 = 3072个节点，勉强可以处理。但是对于更大的输入图像，200<em>200</em>3 = 120000个神经元节点，这种神经网络处理起来就比较费力。<br>很显然，这种时候全连接就显得比较无用和浪费，大量的参数不仅难以优化，而且会快速的导致网络的过拟合。  </p>
+<h3 id="Architecture"><a href="#Architecture" class="headerlink" title="Architecture"></a>Architecture</h3><p>卷积神经网络同样由许多层构成，其中主要的有三种：</p>
+<ol>
+<li>Concoluntional Layer (卷积层)</li>
+<li>Polling Layer ()</li>
+<li>Full-Connected Layer ()</li>
+</ol>
+<p>一个较为典型的架构是：[INPUT-CONV-RELU-POOL-FC]</p>
+<ul>
+<li>INPUT: 3-d [width <em> height </em> color-channels]</li>
+<li>CONV : 卷积层</li>
+<li>RELU : Rectified Linear Unit (线性整流函数) 常用的有斜坡函数(max(0,x))</li>
+<li>POOL : 对输入进行下降抽样（输出向量的前两位小于输入）</li>
+<li>FC: 全连接的层  </li>
+</ul>
+<p>其中只有CONV层和FC层是包含所需要优化的参数的。</p>
+<h2 id="Layers"><a href="#Layers" class="headerlink" title="Layers"></a>Layers</h2><h3 id="Convolutional-Layer-卷积层"><a href="#Convolutional-Layer-卷积层" class="headerlink" title="Convolutional Layer (卷积层)"></a>Convolutional Layer (卷积层)</h3><p>我们知道在高维度的输入下，全连接不太实际。取而代之的是，可以对每个节点和输入的某个局部的区域连接。而如何选择这个区域，由一组超参数（hyperparameter）决定，这被称为神经元的（receptive field），也就是filter size.</p>
+<h4 id="输出维度（spatial-arrangement）"><a href="#输出维度（spatial-arrangement）" class="headerlink" title="输出维度（spatial-arrangement）"></a>输出维度（spatial-arrangement）</h4><p>输出的空间维度由三个超参数决定：</p>
+<ul>
+<li>Depth: 输出的深度等于用到的filter的个数。可以理解为：不同的filter试图在数据里面找到不同的特征。</li>
+<li>Stride: Stride可以理解为对filter滑动的间距。当Stride较大的时候，输出的维度较小。（通常情况下1、2）</li>
+<li>Zero-padding: 有时候在特定Stride值下，不能整除的时候周围输入就要补零。</li>
+</ul>
+<p>$W =$ input volume size<br>$P =$ receptive field size of the conv layer nerons<br>$S =$ stride<br>$P =$ amount of zero-padding<br>则有：<br>$(W-F+2P)/S + 1$则为一个filter所对应的CONV Layer的节点数。</p>
+<h4 id="参数共享（parameter-sharing）"><a href="#参数共享（parameter-sharing）" class="headerlink" title="参数共享（parameter sharing）"></a>参数共享（parameter sharing）</h4><p>在Conv Layer Local connectivity的情况下，假设输入向量大小为[a<em> b </em> c], 输出[x <em> y</em> z], filter [n <em> m </em> c]。那么Conv Layer一共有xyz个节点，每一个节点有nmc个参数，一共有xyznmc个参数，取x = 55, y = 55, z = 96,n = 11,m = 11, c = 3。这种数量级仍然是难以接受的。</p>
+<p>可以通过一个合理的假设大量减少参数的数量，可以认为如果某个特征在某一点是有效的，那么在其它点其是同样有效的。也就是说，限制Conv layer在每一个filter（depth）下的神经元使用同样的参数和bias，总的参数数量可以快速减少到zmnc。（在back propogation当中，同意深度下使用相同参数的神经元的贡献会被相加）</p>
+<p>Conv Layer 的计算过程如图所示：<br><img src="./images/tf/convolution.png" alt=""></p>
+<h4 id="Two-key-insights："><a href="#Two-key-insights：" class="headerlink" title="Two key insights："></a>Two key insights：</h4><p>关于CONV Layer的两个关键点<br>1) Features are hierarchical<br>Composing high-complexity features out of low-complexity features is more<br>efficient than learning high-complexity features directly.<br>e.g.: having an “circle” detector is useful for detecting faces… and basketballs<br>2) Features are translationally invariant<br>If a feature is useful to compute at (x, y) it is useful to compute that feature at<br>(x’, y’) as well</p>
+<p>ps: 为何叫卷积层呢：因为其与两个信号的卷积类似。  </p>
+<h3 id="Pooling-Layer-不知道咋翻译"><a href="#Pooling-Layer-不知道咋翻译" class="headerlink" title="Pooling Layer (不知道咋翻译..)"></a>Pooling Layer (不知道咋翻译..)</h3><p>Pooling Layer常被加在连续的Conv Layer当中，它的主要作用是逐步减少空间大小来减少参数的数量，从而控制过拟合。  </p>
+<p>Pooling层独立的作用于各个depth slice。</p>
+<p>一个常见的例子是使用2*2的filter，stride为2,使用max function，取四激励中最大的，从而忽略掉75%的激励</p>
+<p>当然还有一些其它pooling的方法，如average pooling和L2-norm pooling在此mark以后深入研究。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/11/machinelearning/tensorflow_notes/note3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="muchenli">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/cat.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JonassenLi">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/04/11/machinelearning/tensorflow_notes/note3/" itemprop="url">
+                  TensorFlow 学习笔记3 Manage EXperiments
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-04-11T20:59:00+08:00">
+                2018-04-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="Tensorflow-学习笔记-3"><a href="#Tensorflow-学习笔记-3" class="headerlink" title="Tensorflow 学习笔记 #3"></a>Tensorflow 学习笔记 #3</h1><p><strong>keywords</strong> :  model base, variable sharing, model sharing</p>
+<h2 id="构建tensorflow模型的一般步骤"><a href="#构建tensorflow模型的一般步骤" class="headerlink" title="构建tensorflow模型的一般步骤"></a>构建tensorflow模型的一般步骤</h2><p>Phase1: <strong>assenmble graph</strong> </p>
+<ol>
+<li>Import Data</li>
+<li>Define the weigths</li>
+<li>Define the inferece model</li>
+<li>Define loss function</li>
+<li>Define optimizer</li>
+</ol>
+<p>Phase2: <strong>execute the computation</strong></p>
+<ol>
+<li>initialize all model variables for the first time</li>
+<li>Initialize iterator / feed training data</li>
+<li>Excecute the inference model on the training data</li>
+<li>compute cost</li>
+<li>Adjust model parameters to minimize cost </li>
+</ol>
+<p>利用python面向对象的性质为自己的模型简历一个类：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Model</span>:</span></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, params)</span>:</span></div><div class="line">        <span class="keyword">pass</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_import_data</span><span class="params">(self)</span>:</span></div><div class="line">        <span class="string">""" Step 1: import data """</span></div><div class="line">        <span class="keyword">pass</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_create_embedding</span><span class="params">(self)</span>:</span></div><div class="line">        <span class="string">""" Step 2: in word2vec, it's actually the weights that we care about """</span></div><div class="line">        <span class="keyword">pass</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_create_loss</span><span class="params">(self)</span>:</span></div><div class="line">        <span class="string">""" Step 3 + 4: define the inference + the loss function """</span></div><div class="line">        <span class="keyword">pass</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_create_optimizer</span><span class="params">(self)</span>:</span></div><div class="line">        <span class="string">""" Step 5: define optimizer """</span></div><div class="line">        <span class="keyword">pass</span></div></pre></td></tr></table></figure></p>
+<h2 id="Variable-Sharing"><a href="#Variable-Sharing" class="headerlink" title="Variable Sharing"></a>Variable Sharing</h2><h3 id="Name-Scope"><a href="#Name-Scope" class="headerlink" title="Name Scope"></a>Name Scope</h3><pre><code>为了能够在tensor board上较为清晰的辨识出节点之间的关系，引入name_scope可将其分组
+</code></pre><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">with</span> tf.name_scope(name_of_that_scope):</div><div class="line">    <span class="comment"># declare op1</span></div><div class="line">    <span class="comment"># declare op2</span></div><div class="line">    <span class="comment"># declare op3</span></div></pre></td></tr></table></figure>
+<h3 id="Variable-Scope"><a href="#Variable-Scope" class="headerlink" title="Variable Scope"></a>Variable Scope</h3><pre><code>使用Varibale scope来做到变量共享，在variable_scope中使用get_variable方法来获取之前创建的变量而不是新的一个变量
+</code></pre><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">with</span> tf.variable_scope(<span class="string">"xxx"</span>) <span class="keyword">as</span> scope:</div><div class="line">    <span class="comment"># a = tf.get_variable("x",.)..</span></div></pre></td></tr></table></figure>
+<h2 id="tensorflow-实验管理"><a href="#tensorflow-实验管理" class="headerlink" title="tensorflow 实验管理"></a>tensorflow 实验管理</h2><h3 id="使用checkpoint保存训练中间结果"><a href="#使用checkpoint保存训练中间结果" class="headerlink" title="使用checkpoint保存训练中间结果"></a>使用checkpoint保存训练中间结果</h3><p>对于一个需要较长时间训练的模型来说，断点恢复能力是十分必要的。<br>tensorflow也设置了相应的机制，即为checkpoint，可以用来周期性的保存当前模型的参数等数据。<br>实现这一点的是tf.train.Sacer() 类，它会将图的变量保存在二进制文件当中。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">tf.train.Saver.save(</div><div class="line">    sess,</div><div class="line">    save_path,</div><div class="line">    global_step=<span class="keyword">None</span>,</div><div class="line">    latest_filename=<span class="keyword">None</span>,</div><div class="line">    meta_graph_suffix=<span class="string">'meta'</span>,</div><div class="line">    write_meta_graph=<span class="keyword">True</span>,</div><div class="line">    write_state=<span class="keyword">True</span></div><div class="line">)</div></pre></td></tr></table></figure></p>
+<p>常用的保存checkpoint的方法如下所示：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># define model</span></div><div class="line"></div><div class="line"><span class="comment"># create a saver object</span></div><div class="line">saver = tf.train.Saver()</div><div class="line"></div><div class="line"><span class="comment"># launch a session to execute the computation</span></div><div class="line"><span class="keyword">with</span> tf.Session() <span class="keyword">as</span> sess:</div><div class="line">    <span class="comment"># actual training loop</span></div><div class="line">    <span class="keyword">for</span> step <span class="keyword">in</span> range(training_steps): </div><div class="line">	sess.run([optimizer])</div><div class="line">	<span class="keyword">if</span> (step + <span class="number">1</span>) % <span class="number">1000</span> == <span class="number">0</span>:</div><div class="line">	   saver.save(sess, <span class="string">'checkpoint_directory/model_name'</span>, global_step=global_step)</div><div class="line">``` </div><div class="line">这里的global_step是一个用来记录图训练了多少步的变量，创建其的时候需要设置其不能被训练。</div><div class="line">（optimizer默认训练所有变量）</div><div class="line">```python</div><div class="line">global_step = tf.Variable(<span class="number">0</span>, dtype=tf.int32, trainable=<span class="keyword">False</span>, name=<span class="string">'global_step'</span>)</div></pre></td></tr></table></figure></p>
+<p>optimizer一般也接收一个global_step变量的输入，每一次优化更新之后会将global_step的值自增<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">optimizer = tf.train.GradientDescentOptimizer(lr).minimize(loss,global_step=global_step)</div></pre></td></tr></table></figure></p>
+<p>tensorflow还支持在一个文件夹里面找checkpoint,如果有合法的，恢复checkpoint,否则继续执行<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">ckpt = tf.train.get_checkpoint_state(os.path.dirname(<span class="string">'checkpoints/checkpoint'</span>))</div><div class="line"><span class="keyword">if</span> ckpt <span class="keyword">and</span> ckpt.model_checkpoint_path:</div><div class="line">     saver.restore(sess, ckpt.model_checkpoint_path)</div></pre></td></tr></table></figure></p>
+<h3 id="使用tf-summary可视化训练数据"><a href="#使用tf-summary可视化训练数据" class="headerlink" title="使用tf.summary可视化训练数据"></a>使用tf.summary可视化训练数据</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">_create_summaries</span><span class="params">(self)</span>:</span></div><div class="line">     <span class="keyword">with</span> tf.name_scope(<span class="string">"summaries"</span>):</div><div class="line">            tf.summary.scalar(<span class="string">"loss"</span>, self.loss)</div><div class="line">            tf.summary.scalar(<span class="string">"accuracy"</span>, self.accuracy)            </div><div class="line">            tf.summary.histogram(<span class="string">"histogram loss"</span>, self.loss)</div><div class="line">            <span class="comment"># because you have several summaries, we should merge them all</span></div><div class="line">            <span class="comment"># into one op to make it easier to manage</span></div><div class="line">            self.summary_op = tf.summary.merge_all()</div></pre></td></tr></table></figure>
+<p>summary_op和其它operation一样，需要在sess中运行得到结果。<br>得到结果之后使用add_summary把结果写入writer当中，就可以在tensorbord中看到add_summary的图的各种曲线啦<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">writer.add_summary(summary, global_step=step)</div></pre></td></tr></table></figure></p>
+<p>summary的用法参考<a href="https://www.tensorflow.org/programmers_guide/summaries_and_tensorboard" target="_blank" rel="external">这里</a></p>
+<h3 id="control-randomization"><a href="#control-randomization" class="headerlink" title="control randomization"></a>control randomization</h3><h3 id="Auto-diff"><a href="#Auto-diff" class="headerlink" title="Auto diff"></a>Auto diff</h3>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/31/machinelearning/tensorflow_notes/tf_minist/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="muchenli">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/cat.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JonassenLi">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/31/machinelearning/tensorflow_notes/tf_minist/" itemprop="url">
+                  Using tensorflow on Minist
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-31T11:31:00+08:00">
+                2018-03-31
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="使用卷积神经网络预测minist手写数字"><a href="#使用卷积神经网络预测minist手写数字" class="headerlink" title="使用卷积神经网络预测minist手写数字"></a>使用卷积神经网络预测minist手写数字</h1><p>minist是一个入门的标准cv集。<br>详细注释见minist当中注释<br>直接上代码<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div></pre></td><td class="code"><pre><div class="line"><span class="string">"""Convolutional Neural Network Estimator for MNIST, built with tf.layers."""</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> __future__ <span class="keyword">import</span> absolute_import</div><div class="line"><span class="keyword">from</span> __future__ <span class="keyword">import</span> division</div><div class="line"><span class="keyword">from</span> __future__ <span class="keyword">import</span> print_function</div><div class="line"></div><div class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</div><div class="line"><span class="keyword">import</span> tensorflow <span class="keyword">as</span> tf</div><div class="line"></div><div class="line">tf.logging.set_verbosity(tf.logging.INFO)</div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">cnn_model_fn</span><span class="params">(features, labels, mode)</span>:</span></div><div class="line">  <span class="string">"""Model function for CNN."""</span></div><div class="line">  <span class="comment"># Input Layer</span></div><div class="line">  <span class="comment"># Reshape X to 4-D tensor: [batch_size, width, height, channels]</span></div><div class="line">  <span class="comment"># MNIST images are 28x28 pixels, and have one color channel</span></div><div class="line">  input_layer = tf.reshape(features[<span class="string">"x"</span>], [<span class="number">-1</span>, <span class="number">28</span>, <span class="number">28</span>, <span class="number">1</span>])</div><div class="line"></div><div class="line">  <span class="comment"># Convolutional Layer #1</span></div><div class="line">  <span class="comment"># Computes 32 features using a 5x5 filter with ReLU activation.</span></div><div class="line">  <span class="comment"># Padding is added to preserve width and height.</span></div><div class="line">  <span class="comment"># Input Tensor Shape: [batch_size, 28, 28, 1]</span></div><div class="line">  <span class="comment"># Output Tensor Shape: [batch_size, 28, 28, 32]</span></div><div class="line">  conv1 = tf.layers.conv2d(</div><div class="line">      inputs=input_layer,</div><div class="line">      filters=<span class="number">32</span>,</div><div class="line">      kernel_size=[<span class="number">5</span>, <span class="number">5</span>],</div><div class="line">      padding=<span class="string">"same"</span>,</div><div class="line">      activation=tf.nn.relu)</div><div class="line"></div><div class="line">  <span class="comment"># Pooling Layer #1</span></div><div class="line">  <span class="comment"># First max pooling layer with a 2x2 filter and stride of 2</span></div><div class="line">  <span class="comment"># Input Tensor Shape: [batch_size, 28, 28, 32]</span></div><div class="line">  <span class="comment"># Output Tensor Shape: [batch_size, 14, 14, 32]</span></div><div class="line">  pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[<span class="number">2</span>, <span class="number">2</span>], strides=<span class="number">2</span>)</div><div class="line"></div><div class="line">  <span class="comment"># Convolutional Layer #2</span></div><div class="line">  <span class="comment"># Computes 64 features using a 5x5 filter.</span></div><div class="line">  <span class="comment"># Padding is added to preserve width and height.</span></div><div class="line">  <span class="comment"># Input Tensor Shape: [batch_size, 14, 14, 32]</span></div><div class="line">  <span class="comment"># Output Tensor Shape: [batch_size, 14, 14, 64]</span></div><div class="line">  conv2 = tf.layers.conv2d(</div><div class="line">      inputs=pool1,</div><div class="line">      filters=<span class="number">64</span>,</div><div class="line">      kernel_size=[<span class="number">5</span>, <span class="number">5</span>],</div><div class="line">      padding=<span class="string">"same"</span>,</div><div class="line">      activation=tf.nn.relu)</div><div class="line"></div><div class="line">  <span class="comment"># Pooling Layer #2</span></div><div class="line">  <span class="comment"># Second max pooling layer with a 2x2 filter and stride of 2</span></div><div class="line">  <span class="comment"># Input Tensor Shape: [batch_size, 14, 14, 64]</span></div><div class="line">  <span class="comment"># Output Tensor Shape: [batch_size, 7, 7, 64]</span></div><div class="line">  pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[<span class="number">2</span>, <span class="number">2</span>], strides=<span class="number">2</span>)</div><div class="line"></div><div class="line">  <span class="comment"># Flatten tensor into a batch of vectors</span></div><div class="line">  <span class="comment"># Input Tensor Shape: [batch_size, 7, 7, 64]</span></div><div class="line">  <span class="comment"># Output Tensor Shape: [batch_size, 7 * 7 * 64]</span></div><div class="line">  pool2_flat = tf.reshape(pool2, [<span class="number">-1</span>, <span class="number">7</span> * <span class="number">7</span> * <span class="number">64</span>])</div><div class="line"></div><div class="line">  <span class="comment"># Dense Layer</span></div><div class="line">  <span class="comment"># Densely connected layer with 1024 neurons</span></div><div class="line">  <span class="comment"># Input Tensor Shape: [batch_size, 7 * 7 * 64]</span></div><div class="line">  <span class="comment"># Output Tensor Shape: [batch_size, 1024]</span></div><div class="line">  dense = tf.layers.dense(inputs=pool2_flat, units=<span class="number">1024</span>, activation=tf.nn.relu)</div><div class="line"></div><div class="line">  <span class="comment"># Add dropout operation; 0.6 probability that element will be kept</span></div><div class="line">  dropout = tf.layers.dropout(</div><div class="line">      inputs=dense, rate=<span class="number">0.4</span>, training=mode == tf.estimator.ModeKeys.TRAIN)</div><div class="line"></div><div class="line">  <span class="comment"># Logits layer</span></div><div class="line">  <span class="comment"># Input Tensor Shape: [batch_size, 1024]</span></div><div class="line">  <span class="comment"># Output Tensor Shape: [batch_size, 10]</span></div><div class="line">  logits = tf.layers.dense(inputs=dropout, units=<span class="number">10</span>)</div><div class="line"></div><div class="line">  predictions = &#123;</div><div class="line">      <span class="comment"># Generate predictions (for PREDICT and EVAL mode)</span></div><div class="line">      <span class="string">"classes"</span>: tf.argmax(input=logits, axis=<span class="number">1</span>),</div><div class="line">      <span class="comment"># Add `softmax_tensor` to the graph. It is used for PREDICT and by the</span></div><div class="line">      <span class="comment"># `logging_hook`.</span></div><div class="line">      <span class="string">"probabilities"</span>: tf.nn.softmax(logits, name=<span class="string">"softmax_tensor"</span>)</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">if</span> mode == tf.estimator.ModeKeys.PREDICT:</div><div class="line">    <span class="keyword">return</span> tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)</div><div class="line"></div><div class="line">  <span class="comment"># Calculate Loss (for both TRAIN and EVAL modes)</span></div><div class="line">  loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)</div><div class="line"></div><div class="line">  <span class="comment"># Configure the Training Op (for TRAIN mode)</span></div><div class="line">  <span class="keyword">if</span> mode == tf.estimator.ModeKeys.TRAIN:</div><div class="line">    optimizer = tf.train.GradientDescentOptimizer(learning_rate=<span class="number">0.001</span>)</div><div class="line">    train_op = optimizer.minimize(</div><div class="line">        loss=loss,</div><div class="line">        global_step=tf.train.get_global_step())</div><div class="line">    <span class="keyword">return</span> tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)</div><div class="line"></div><div class="line">  <span class="comment"># Add evaluation metrics (for EVAL mode)</span></div><div class="line">  eval_metric_ops = &#123;</div><div class="line">      <span class="string">"accuracy"</span>: tf.metrics.accuracy(</div><div class="line">          labels=labels, predictions=predictions[<span class="string">"classes"</span>])&#125;</div><div class="line">  <span class="keyword">return</span> tf.estimator.EstimatorSpec(</div><div class="line">      mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)</div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">main</span><span class="params">(unused_argv)</span>:</span></div><div class="line">  <span class="comment"># Load training and eval data</span></div><div class="line">  mnist = tf.contrib.learn.datasets.load_dataset(<span class="string">"mnist"</span>)</div><div class="line">  train_data = mnist.train.images  <span class="comment"># Returns np.array</span></div><div class="line">  train_labels = np.asarray(mnist.train.labels, dtype=np.int32)</div><div class="line">  eval_data = mnist.test.images  <span class="comment"># Returns np.array</span></div><div class="line">  eval_labels = np.asarray(mnist.test.labels, dtype=np.int32)</div><div class="line"></div><div class="line">  <span class="comment"># Create the Estimator</span></div><div class="line">  mnist_classifier = tf.estimator.Estimator(</div><div class="line">      model_fn=cnn_model_fn, model_dir=<span class="string">"/tmp/mnist_convnet_model"</span>)</div><div class="line"></div><div class="line">  <span class="comment"># Set up logging for predictions</span></div><div class="line">  <span class="comment"># Log the values in the "Softmax" tensor with label "probabilities"</span></div><div class="line">  tensors_to_log = &#123;<span class="string">"probabilities"</span>: <span class="string">"softmax_tensor"</span>&#125;</div><div class="line">  logging_hook = tf.train.LoggingTensorHook(</div><div class="line">      tensors=tensors_to_log, every_n_iter=<span class="number">50</span>)</div><div class="line"></div><div class="line">  <span class="comment"># Train the model</span></div><div class="line">  train_input_fn = tf.estimator.inputs.numpy_input_fn(</div><div class="line">      x=&#123;<span class="string">"x"</span>: train_data&#125;,</div><div class="line">      y=train_labels,</div><div class="line">      batch_size=<span class="number">100</span>,</div><div class="line">      num_epochs=<span class="keyword">None</span>,</div><div class="line">      shuffle=<span class="keyword">True</span>)</div><div class="line">  mnist_classifier.train(</div><div class="line">      input_fn=train_input_fn,</div><div class="line">      steps=<span class="number">20000</span>,</div><div class="line">      hooks=[logging_hook])</div><div class="line"></div><div class="line">  <span class="comment"># Evaluate the model and print results</span></div><div class="line">  eval_input_fn = tf.estimator.inputs.numpy_input_fn(</div><div class="line">      x=&#123;<span class="string">"x"</span>: eval_data&#125;,</div><div class="line">      y=eval_labels,</div><div class="line">      num_epochs=<span class="number">1</span>,</div><div class="line">      shuffle=<span class="keyword">False</span>)</div><div class="line">  eval_results = mnist_classifier.evaluate(input_fn=eval_input_fn)</div><div class="line">  print(eval_results)</div><div class="line"></div><div class="line"></div><div class="line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</div><div class="line">  tf.app.run()</div></pre></td></tr></table></figure></p>
+<p>目前我没弄懂的一点在于，这个框架没用session 也没用eager mode是怎么跑起来的， 如果我想可视化地观察一下这个卷积神经网络的结构又该怎么做呢？</p>
+<p>有点明白了，官方的doc当中有这么一句话：<br>Estimators build the graph for you. In other words, you don’t have to build the graph.  </p>
+<p>其实在一开始应该早就说明白过了，tensorflow的api是分层级的:<br><img src="./images/tf/tf_api.png" alt=""></p>
+<p>如上图estimator 和eager mode是同一层级的，它会自动的帮你构建整个图</p>
+<p>TODO: 试着跑一遍代码，用log记录下图的结构，然后在tensorboard里面打开康康。  </p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/30/machinelearning/tensorflow_notes/note2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="muchenli">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/cat.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JonassenLi">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/30/machinelearning/tensorflow_notes/note2/" itemprop="url">
+                  TensorFlow 学习笔记2
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-30T11:31:00+08:00">
+                2018-03-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="TensorFlow-学习笔记-2"><a href="#TensorFlow-学习笔记-2" class="headerlink" title="TensorFlow 学习笔记 #2"></a>TensorFlow 学习笔记 #2</h1><p>先来看一个简单的线性回归的代码例子，再来看在其基础上可以做出什么改进<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> tensorflow <span class="keyword">as</span> tf</div><div class="line"></div><div class="line"><span class="keyword">import</span> utils</div><div class="line"></div><div class="line">DATA_FILE = <span class="string">"data/birth_life_2010.txt"</span></div><div class="line"></div><div class="line"><span class="comment"># Step 1: read in data from the .txt file</span></div><div class="line"><span class="comment"># data is a numpy array of shape (190, 2), each row is a datapoint</span></div><div class="line">data, n_samples = utils.read_birth_life_data(DATA_FILE)</div><div class="line"></div><div class="line"><span class="comment"># Step 2: create placeholders for X (birth rate) and Y (life expectancy)</span></div><div class="line">X = tf.placeholder(tf.float32, name=<span class="string">'X'</span>)</div><div class="line">Y = tf.placeholder(tf.float32, name=<span class="string">'Y'</span>)</div><div class="line"></div><div class="line"><span class="comment"># Step 3: create weight and bias, initialized to 0</span></div><div class="line">w = tf.get_variable(<span class="string">'weights'</span>, initializer=tf.constant(<span class="number">0.0</span>))</div><div class="line">b = tf.get_variable(<span class="string">'bias'</span>, initializer=tf.constant(<span class="number">0.0</span>))</div><div class="line"></div><div class="line"><span class="comment"># Step 4: construct model to predict Y (life expectancy from birth rate)</span></div><div class="line">Y_predicted = w * X + b </div><div class="line"></div><div class="line"><span class="comment"># Step 5: use the square error as the loss function</span></div><div class="line">loss = tf.square(Y - Y_predicted, name=<span class="string">'loss'</span>)</div><div class="line"></div><div class="line"><span class="comment"># Step 6: using gradient descent with learning rate of 0.01 to minimize loss</span></div><div class="line">optimizer = tf.train.GradientDescentOptimizer(learning_rate=<span class="number">0.001</span>).minimize(loss)</div><div class="line"> </div><div class="line"><span class="keyword">with</span> tf.Session() <span class="keyword">as</span> sess:</div><div class="line">	<span class="comment"># Step 7: initialize the necessary variables, in this case, w and b</span></div><div class="line">	sess.run(tf.global_variables_initializer()) </div><div class="line">	</div><div class="line">	<span class="comment"># Step 8: train the model</span></div><div class="line">	<span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">100</span>): <span class="comment"># run 100 epochs</span></div><div class="line">		<span class="keyword">for</span> x, y <span class="keyword">in</span> data:</div><div class="line">			<span class="comment"># Session runs train_op to minimize loss</span></div><div class="line">			sess.run(optimizer, feed_dict=&#123;X: x, Y:y&#125;) </div><div class="line">	</div><div class="line">	<span class="comment"># Step 9: output the values of w and b</span></div><div class="line">	w_out, b_out = sess.run([w, b])</div></pre></td></tr></table></figure></p>
+<h2 id="tensorflow-控制流"><a href="#tensorflow-控制流" class="headerlink" title="tensorflow 控制流"></a>tensorflow 控制流</h2><p>观察上面线性回归所使用的loss function，是个简单的二次函数<br>分析离群点，假设有一个离样本较远的离群点，那么这个离群点造成的loss fuction上的损失较大，会大大影响整个模型的建模。</p>
+<p><strong>使用<a href="https://en.wikipedia.org/wiki/Huber_loss" target="_blank" rel="external">huber loss</a>代替原来简单的loss fuction</strong><br>其定义如下所示    </p>
+<p>$$<br>L_\delta(y,f(x))=\left{<br>\begin{array}{ll}<br>\frac12(y-f(x))^2,&amp;\textrm{for }|y-f(x)|\leq\delta\\<br>\delta\cdot(|y-f(x)|-\delta/2),&amp; \textrm{otherwise.}<br>\end{array}<br>\right.<br>$$</p>
+<p>Huber loss给离群点设置了相对更小的权重,因而提升了拟合的效果。</p>
+<p>一个显然的事实是由于tensorflow 定义和执行的分离，我们不能用python的条件分支语句来控制optimizer使用哪一种loss function,tensor flow提供了分支控制的方法</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Ops</th>
+<th style="text-align:left">Methods</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Control Flow Ops</td>
+<td style="text-align:left">tf.count_up_to, tf.cond, tf.case, tf.while_loop, tf.group …</td>
+</tr>
+<tr>
+<td style="text-align:left">Comparison Ops</td>
+<td style="text-align:left">tf.equal, tf.not_equal, tf.less, tf.greater, tf.where, …</td>
+</tr>
+<tr>
+<td style="text-align:left">Logical Ops</td>
+<td style="text-align:left">tf.logical_and, tf.logical_not, tf.logical_or, tf.logical_xor</td>
+</tr>
+<tr>
+<td style="text-align:left">Debugging Ops</td>
+<td style="text-align:left">tf.is_finite, tf.is_inf, tf.is_nan, tf.Assert, tf.Print, …</td>
+</tr>
+</tbody>
+</table>
+<p>huber_loss：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">huber_loss</span><span class="params">(labels, predictions, delta=<span class="number">14.0</span>)</span>:</span></div><div class="line">    residual = tf.abs(labels - predictions)</div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">f1</span><span class="params">()</span>:</span> <span class="keyword">return</span> <span class="number">0.5</span> * tf.square(residual)</div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">f2</span><span class="params">()</span>:</span> <span class="keyword">return</span> delta * residual - <span class="number">0.5</span> * tf.square(delta)</div><div class="line">    <span class="keyword">return</span> tf.cond(residual &lt; delta, f1, f2)</div></pre></td></tr></table></figure></p>
+<h2 id="tensorflow-输入"><a href="#tensorflow-输入" class="headerlink" title="tensorflow 输入"></a>tensorflow 输入</h2><h3 id="placeholder-amp-feed-dict"><a href="#placeholder-amp-feed-dict" class="headerlink" title="placeholder &amp; feed_dict"></a>placeholder &amp; feed_dict</h3><p>note1跳过了对tensorflow基本输入方式的叙述。实际上由于graph在定义的时候不需要考虑实际输入数据的特性。一般创建输入变量的时候实际上是为要输入的变量预留位置，使用tf.placeholder定义,如下是一个使用的例子<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">a = tf.placeholder(dtype, shape=<span class="keyword">None</span>, name=<span class="keyword">None</span>)</div><div class="line">...</div><div class="line"><span class="keyword">with</span> tf.Session() <span class="keyword">as</span> sess:</div><div class="line">   sess.run(something, feed_dict = &#123;a:[<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>]&#125;)</div></pre></td></tr></table></figure></p>
+<p>shape参数制定了传入的tensor的结构，shape为None意味着任意结构的tensor都能被接收（可能潜在地会引入bug）</p>
+<h3 id="tf-data"><a href="#tf-data" class="headerlink" title="tf.data"></a>tf.data</h3><p>placeholder让数据的处理和带入图中运算分开，在tensorflow框架之外完成（完全可以用numpy等工具处理），不过这样带来的不好的地方之一在于，数据处理被放在了python的单一线程当中，会让数据处理较慢。（大量数据要从外部一个个装载到place_holder处）  </p>
+<p>如上述代码当中看起来就不优雅的一段：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">100</span>): <span class="comment"># run 100 epochs</span></div><div class="line">	<span class="keyword">for</span> x, y <span class="keyword">in</span> data:</div><div class="line">		<span class="comment"># Session runs train_op to minimize loss</span></div><div class="line">		sess.run(optimizer, feed_dict=&#123;X: x, Y:y&#125;)</div></pre></td></tr></table></figure></p>
+<p>将数据分100次载入place_holder当中实际上较大的拖慢了程序的速度。还需要考虑的是在并行计算的时候载入feed_dict可能阻碍了其它操作的执行。</p>
+<p>tensorflow提供的解决方案是将数据存储在tf.data.Dataset object当中<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">tf.data.Dataset.from_tensor_slices((features, labels))</div><div class="line"><span class="comment"># can use numpy arrays as features and labels</span></div></pre></td></tr></table></figure></p>
+<p>之后使用迭代器来访问dataset当中的每一个数据<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># we use make_initializable_iterator for multiple epochs</span></div><div class="line">iterator = dataset.make_initializable_iterator()</div><div class="line">X, Y = iterator.get_next() </div><div class="line">···</div><div class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">100</span>): </div><div class="line">        <span class="comment"># reset where iterator point to</span></div><div class="line">        sess.run(iterator.initializer)</div><div class="line">        total_loss = <span class="number">0</span></div><div class="line">        <span class="keyword">try</span>:</div><div class="line">            <span class="keyword">while</span> <span class="keyword">True</span>:</div><div class="line">                sess.run([optimizer]) </div><div class="line">        <span class="keyword">except</span> tf.errors.OutOfRangeError:</div><div class="line">            <span class="keyword">pass</span></div></pre></td></tr></table></figure></p>
+<p>dataset 也支持许多原生的对数据集的操作来改变数据集或是生成新的数据集<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">dataset = dataset.shuffle(<span class="number">1000</span>)</div><div class="line">dataset = dataset.repeat(<span class="number">100</span>)</div><div class="line">dataset = dataset.batch(<span class="number">128</span>)</div><div class="line">dataset = dataset.map(<span class="keyword">lambda</span> x: tf.one_hot(x, <span class="number">10</span>)) </div><div class="line"><span class="comment"># convert each element of dataset to one_hot vector</span></div></pre></td></tr></table></figure></p>
+<h2 id="Optimizers"><a href="#Optimizers" class="headerlink" title="Optimizers"></a>Optimizers</h2><p>默认情况下optimizer在每一轮迭代的过程中自动更新loss function所依赖的所有变量，若有不想更新的变量，在定义的时候加上参数trainable=False</p>
+<p>(to do: add contont about more detailed control of model trains using tf.gradient)</p>
+<h2 id="Refs"><a href="#Refs" class="headerlink" title="Refs"></a>Refs</h2><p><a href="https://docs.google.com/document/d/1kMGs68rIHWHifBiqlU3j_2ZkrNj9RquGTe8tJ7eR1sE/edit#" target="_blank" rel="external">03_Lecture note_Linear and Logistic Regression</a><br><a href="https://en.wikipedia.org/wiki/Huber_loss" target="_blank" rel="external">Huber Loss</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/26/machinelearning/tensorflow_notes/note1/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -283,7 +1035,7 @@
               
                 
                 <a class="post-title-link" href="/2018/03/26/machinelearning/tensorflow_notes/note1/" itemprop="url">
-                  TensorFlow 学习笔记
+                  TensorFlow 学习笔记1
                 </a>
               
             
@@ -339,7 +1091,7 @@
           
             <h1 id="TensorFlow-学习笔记-1"><a href="#TensorFlow-学习笔记-1" class="headerlink" title="TensorFlow 学习笔记 #1"></a>TensorFlow 学习笔记 #1</h1><h2 id="TensorFlow-Basics"><a href="#TensorFlow-Basics" class="headerlink" title="TensorFlow Basics"></a>TensorFlow Basics</h2><h3 id="Graphs-and-Sessions"><a href="#Graphs-and-Sessions" class="headerlink" title="Graphs and Sessions"></a>Graphs and Sessions</h3><p>首先，需要和普通python程序区别出来的是，tensorflow将计算的定义和具体执行过程分离开来，个人认为这有点像函数式中的求值运算。  </p>
 <p>不过tensorflow的特点在于其把所依赖的所有计算转换成一个数据流图（dag）</p>
-<p><img src="./img/tensor_data_flow_graph.png" alt="数据流图"></p>
+<p><img src="./images/tf/tensor_data_flow_graph.png" alt="数据流图"></p>
 <ol>
 <li>根据输入构成数据流图</li>
 <li>创建会话，执行操作</li>
@@ -941,715 +1693,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/03/UVAlive3211-2SAT模板题/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/cat.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="JonassenLi">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/09/03/UVAlive3211-2SAT模板题/" itemprop="url">
-                  UVAlive3211-2SAT模板题
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Veröffentlicht am</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-09-03T18:32:08+08:00">
-                2017-09-03
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">in</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/acm/" itemprop="url" rel="index">
-                    <span itemprop="name">ACM</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="UVAlive-3211"><a href="#UVAlive-3211" class="headerlink" title="UVAlive-3211"></a>UVAlive-3211</h2><p>题意大概是求n架飞机每个飞机两个降落时间取一个使相邻降落的飞机时间差最大<br>要最优化差值，二分转化为在某一时间下能否满足，按照相邻时间是否大于当前二分的时间构建2-SAT<br>模板题模板题  </p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div></pre></td><td class="code"><pre><div class="line">ll mod = <span class="number">10000</span>;</div><div class="line">ll INF = <span class="number">1L</span>L&lt;&lt;<span class="number">60L</span>L;</div><div class="line"><span class="keyword">const</span> <span class="keyword">double</span> eps = <span class="number">1e-8</span>;</div><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt; <span class="function">T <span class="title">gcd</span><span class="params">(T a,T b)</span></span></div><div class="line">&#123;<span class="keyword">if</span>(!b)<span class="keyword">return</span> a;<span class="keyword">return</span> gcd(b,a%b);&#125;</div><div class="line"></div><div class="line"><span class="comment">//struct time&#123;</span></div><div class="line"><span class="comment">//    int time,id;</span></div><div class="line"><span class="comment">//&#125;t[MAXN];</span></div><div class="line"><span class="keyword">int</span> t[MAXN];</div><div class="line"></div><div class="line"><span class="keyword">struct</span> SAT2&#123;</div><div class="line">    <span class="keyword">int</span> vis[MAXN*<span class="number">2</span>],cnt;</div><div class="line">    <span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; G[MAXN*<span class="number">2</span>];</div><div class="line">    <span class="keyword">int</span> n;</div><div class="line">    <span class="keyword">bool</span> mark[MAXN*<span class="number">2</span>];</div><div class="line">    <span class="function"><span class="keyword">bool</span> <span class="title">dfs</span><span class="params">(<span class="keyword">int</span> x)</span></span>&#123;</div><div class="line">        <span class="keyword">if</span>(mark[x^<span class="number">1</span>]) <span class="keyword">return</span> <span class="literal">false</span>;</div><div class="line">        <span class="keyword">else</span> <span class="keyword">if</span>(mark[x]) <span class="keyword">return</span> <span class="literal">true</span>;</div><div class="line">        mark[x] = <span class="literal">true</span>;</div><div class="line">        vis[cnt++] = x;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;G[x].size(); i++)&#123;</div><div class="line">            <span class="keyword">if</span>(!dfs(G[x][i])) <span class="keyword">return</span> <span class="literal">false</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">init</span><span class="params">(<span class="keyword">int</span> n)</span></span>&#123;</div><div class="line">        <span class="keyword">this</span>-&gt;n = n;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;=<span class="number">2</span>*n; i++)&#123;</div><div class="line">            vis[i] = <span class="literal">false</span>;</div><div class="line">            G[i].clear();</div><div class="line">        &#125;</div><div class="line">        <span class="built_in">memset</span>(mark,<span class="literal">false</span>,<span class="keyword">sizeof</span>(mark));</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// 当 x!=xval or y != yval(val=0/1)</span></div><div class="line">    <span class="comment">// 则由于拆点每个x或者y变成两个点</span></div><div class="line">    <span class="comment">// x==xval=&gt;y!=yval     y==yval=&gt;x!=xval</span></div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">add_clause</span><span class="params">(<span class="keyword">int</span> x,<span class="keyword">int</span> xval,<span class="keyword">int</span> y,<span class="keyword">int</span> yval)</span></span>&#123;</div><div class="line">        x = x*<span class="number">2</span>+xval;</div><div class="line">        y = y*<span class="number">2</span>+yval;</div><div class="line">        G[x].pb(y^<span class="number">1</span>);</div><div class="line">        G[y].pb(x^<span class="number">1</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">bool</span> <span class="title">solve</span><span class="params">()</span></span>&#123;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">2</span>*n; i+=<span class="number">2</span>)</div><div class="line">        <span class="keyword">if</span>(!mark[i] &amp;&amp; !mark[i^<span class="number">1</span>])&#123;</div><div class="line">            cnt = <span class="number">0</span>;</div><div class="line">            <span class="keyword">if</span>(!dfs(i))&#123;</div><div class="line">                <span class="keyword">while</span>(cnt&gt;<span class="number">0</span>) mark[vis[--cnt]] = <span class="literal">false</span>;</div><div class="line">                <span class="keyword">if</span>(!dfs(i^<span class="number">1</span>)) <span class="keyword">return</span> <span class="literal">false</span>;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</div><div class="line">    &#125;</div><div class="line">&#125;st;</div><div class="line"><span class="keyword">int</span> n;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">bool</span> <span class="title">solve</span><span class="params">(<span class="keyword">int</span> T)</span></span></div><div class="line">&#123;</div><div class="line">    st.init(n);</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">2</span>*n; i++)&#123;</div><div class="line">        <span class="keyword">int</span> j;</div><div class="line">        <span class="keyword">if</span>(i%<span class="number">2</span>) j = i+<span class="number">1</span>;</div><div class="line">        <span class="keyword">else</span>    j = i+<span class="number">2</span>;</div><div class="line">        <span class="keyword">for</span>(;j&lt;<span class="number">2</span>*n;j++)&#123;</div><div class="line">            <span class="keyword">if</span>(<span class="built_in">abs</span>(t[i]-t[j])&lt;T)&#123;</div><div class="line">                st.add_clause(i/<span class="number">2</span>,i&amp;<span class="number">1</span>,j/<span class="number">2</span>,j&amp;<span class="number">1</span>);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> st.solve();</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">while</span>(sc(n)==<span class="number">1</span>&amp;&amp;n)&#123;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;n; i++)&#123;</div><div class="line">            <span class="keyword">int</span> e,l;</div><div class="line">            sc(e);  sc(l);</div><div class="line">            t[i*<span class="number">2</span>] = e;    <span class="comment">//t[i*2].id = i*2;</span></div><div class="line">            t[i*<span class="number">2</span>+<span class="number">1</span>] = l;  <span class="comment">//t[i*2+1].id=i*2+1;</span></div><div class="line">        &#125;</div><div class="line">        <span class="keyword">int</span> lt = <span class="number">0</span>,rt = <span class="number">1e7</span>;</div><div class="line">        <span class="keyword">while</span>(lt&lt;rt)&#123;</div><div class="line">            <span class="comment">//cout&lt;&lt;lt&lt;&lt;" "&lt;&lt;rt&lt;&lt;endl;</span></div><div class="line">            <span class="keyword">int</span> mt = (lt+rt+<span class="number">1</span>)/<span class="number">2</span>;</div><div class="line">            <span class="keyword">if</span>(solve(mt))</div><div class="line">                lt = mt;</div><div class="line">            <span class="keyword">else</span></div><div class="line">                rt = mt<span class="number">-1</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="built_in">cout</span>&lt;&lt;lt&lt;&lt;<span class="built_in">endl</span>;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/03/简单的LCA/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/cat.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="JonassenLi">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/09/03/简单的LCA/" itemprop="url">
-                  简单的LCA==
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Veröffentlicht am</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-09-03T13:49:50+08:00">
-                2017-09-03
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">in</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/acm/" itemprop="url" rel="index">
-                    <span itemprop="name">ACM</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>题源： NAIPC 2016 The University Of Chicago<br>校内赛一道LCA==，写掉了一个等号调了一下午==<br>dfs爆栈然后手写栈模拟了一发</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">int</span> depth[MAXN*<span class="number">2</span>];</div><div class="line"><span class="keyword">struct</span> ST&#123;</div><div class="line">    <span class="keyword">int</span> mm[<span class="number">2</span>*MAXN];</div><div class="line">    <span class="keyword">int</span> dp[<span class="number">2</span>*MAXN][<span class="number">25</span>];</div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">init</span><span class="params">(<span class="keyword">int</span> n)</span></span>&#123;</div><div class="line">        mm[<span class="number">0</span>] = <span class="number">-1</span>;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">1</span>;i&lt;=n; i++)&#123;</div><div class="line">            mm[i] = ((i&amp;(i<span class="number">-1</span>))==<span class="number">0</span>)?mm[i<span class="number">-1</span>]+<span class="number">1</span>:mm[i<span class="number">-1</span>];</div><div class="line">            dp[i][<span class="number">0</span>] = i;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> j=<span class="number">1</span> ;j&lt;=mm[n] ;j++)</div><div class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">1</span>; i+(<span class="number">1</span>&lt;&lt;j)<span class="number">-1</span>&lt;=n; i++)</div><div class="line">                dp[i][j] = (depth[dp[i][j<span class="number">-1</span>]] &lt; depth[dp[i+(<span class="number">1</span>&lt;&lt;(j<span class="number">-1</span>))][j<span class="number">-1</span>]])? dp[i][j<span class="number">-1</span>]:dp[i+(<span class="number">1</span>&lt;&lt;(j<span class="number">-1</span>))][j<span class="number">-1</span>];</div><div class="line">    &#125;</div><div class="line">    <span class="function"><span class="keyword">int</span> <span class="title">query</span><span class="params">(<span class="keyword">int</span> a,<span class="keyword">int</span> b)</span></span>&#123;</div><div class="line">        <span class="keyword">if</span>(a&gt;b)swap(a,b);</div><div class="line">        <span class="keyword">int</span> k = mm[b-a+<span class="number">1</span>];</div><div class="line">        <span class="keyword">return</span> depth[dp[a][k]]&lt;=depth[dp[b-(<span class="number">1</span>&lt;&lt;k)+<span class="number">1</span>][k]]?dp[a][k]:dp[b-(<span class="number">1</span>&lt;&lt;k)+<span class="number">1</span>][k];</div><div class="line">    &#125;</div><div class="line">&#125;st;</div><div class="line"></div><div class="line"><span class="built_in">vector</span>&lt;<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &gt;G(MAXN);</div><div class="line"><span class="keyword">int</span> vs[MAXN*<span class="number">2</span>];</div><div class="line"><span class="keyword">int</span> pos[MAXN];</div><div class="line"></div><div class="line"></div><div class="line"><span class="comment">//void dfs(int v,int pre,int d,int &amp;k)&#123;</span></div><div class="line"><span class="comment">//    pos[v] = k;</span></div><div class="line"><span class="comment">//    vs[k] = v;</span></div><div class="line"><span class="comment">//    depth[k++] = d;</span></div><div class="line"><span class="comment">//    for(int i=0; i&lt;G[v].size(); i++)&#123;</span></div><div class="line"><span class="comment">//        if(G[v][i]!=pre)&#123;</span></div><div class="line"><span class="comment">//            dfs(G[v][i],v,d+1,k);</span></div><div class="line"><span class="comment">//            vs[k] = v;</span></div><div class="line"><span class="comment">//            depth[k++]=d;</span></div><div class="line"><span class="comment">//        &#125;</span></div><div class="line"><span class="comment">//    &#125;</span></div><div class="line"><span class="comment">//&#125;</span></div><div class="line"></div><div class="line"><span class="keyword">struct</span> dfs&#123;</div><div class="line">    <span class="keyword">int</span> v,pre,d,i;</div><div class="line">    dfs(<span class="keyword">int</span> vv,<span class="keyword">int</span> pp,<span class="keyword">int</span> dd,<span class="keyword">int</span> ii):v(vv),pre(pp),d(dd),i(ii)&#123;&#125;</div><div class="line">&#125;;</div><div class="line"><span class="built_in">stack</span>&lt;dfs&gt; s;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">solve</span><span class="params">(<span class="keyword">int</span> &amp;k)</span></span>&#123;</div><div class="line">    s.push(dfs(<span class="number">1</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>));</div><div class="line">    <span class="keyword">int</span> v,pre,d,i;</div><div class="line">    <span class="keyword">while</span>(!s.empty())&#123;</div><div class="line">        dfs cur = s.top();</div><div class="line">        s.pop();</div><div class="line">        <span class="comment">//cout&lt;&lt;s.size()&lt;&lt;endl;</span></div><div class="line">        v = cur.v;  pre = cur.pre; d = cur.d; i = cur.i;</div><div class="line">        <span class="keyword">if</span>(i==<span class="number">0</span>)&#123;</div><div class="line">            pos[v] = k;</div><div class="line">            vs[k] = v;</div><div class="line">            depth[k++] = d;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">else</span>&#123;</div><div class="line">            vs[k] = v;</div><div class="line">            depth[k++]=d;</div><div class="line">        &#125;</div><div class="line">        <span class="comment">//cout&lt;&lt;v&lt;&lt;" "&lt;&lt;G[v].size()&lt;&lt;endl;</span></div><div class="line">        <span class="keyword">if</span>(i&lt;G[v].size() &amp;&amp; G[v][i]==pre) i++;</div><div class="line">        <span class="keyword">if</span>(i&lt;G[v].size())&#123;</div><div class="line">            <span class="comment">//cout&lt;&lt;"from:"&lt;&lt;v&lt;&lt;" to:"&lt;&lt;G[v][i]&lt;&lt;endl;</span></div><div class="line">            cur.i = i+<span class="number">1</span>;</div><div class="line">            s.push(cur);</div><div class="line">            s.push(dfs(G[v][i],v,d+<span class="number">1</span>,<span class="number">0</span>));</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">lca_query</span><span class="params">(<span class="keyword">int</span> v,<span class="keyword">int</span> u)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">int</span> s = min(pos[v],pos[u]);</div><div class="line">    <span class="keyword">int</span> e = max(pos[v],pos[u]);</div><div class="line">    <span class="keyword">return</span> <span class="number">1</span>+depth[s]+depth[e]<span class="number">-2</span>*depth[st.query(s,e)];</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">    frein;</div><div class="line">    <span class="keyword">int</span> n;</div><div class="line">    <span class="built_in">scanf</span>(<span class="string">"%d"</span>,&amp;n);</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;n<span class="number">-1</span>; i++)&#123;</div><div class="line">        <span class="keyword">int</span> f,t;</div><div class="line">        <span class="built_in">scanf</span>(<span class="string">"%d%d"</span>,&amp;f,&amp;t);</div><div class="line">        G[f].pb(t);</div><div class="line">        G[t].pb(f);</div><div class="line">    &#125;</div><div class="line"><span class="comment">//    for(int i=1;i&lt;n; i++)&#123;</span></div><div class="line"><span class="comment">//        cout&lt;&lt;i&lt;&lt;":  "&lt;&lt;endl;</span></div><div class="line"><span class="comment">//        for(int j=0; j&lt;G[i].size(); j++)</span></div><div class="line"><span class="comment">//            cout&lt;&lt;G[i][j]&lt;&lt;" ";</span></div><div class="line"><span class="comment">//        cout&lt;&lt;endl;</span></div><div class="line"><span class="comment">//    &#125;</span></div><div class="line">    <span class="keyword">int</span> cnt=<span class="number">1</span>;</div><div class="line">    solve(cnt);</div><div class="line"><span class="comment">//    for(int i=0; i&lt;cnt;i++)</span></div><div class="line"><span class="comment">//        cout&lt;&lt;vs[i]&lt;&lt;" depth: "&lt;&lt;depth[i]&lt;&lt;endl;</span></div><div class="line"><span class="comment">//    for(int i=1; i&lt;cnt; i++)&#123;</span></div><div class="line"><span class="comment">//        cout&lt;&lt;"node:"&lt;&lt;vs[i]&lt;&lt;" depth:"&lt;&lt;depth[i]&lt;&lt;endl;</span></div><div class="line"><span class="comment">//    &#125;</span></div><div class="line"><span class="comment">//    for(int i=1; i&lt;=n; i++)</span></div><div class="line"><span class="comment">//        cout&lt;&lt;"vis"&lt;&lt;i&lt;&lt;" is "&lt;&lt;pos[i]&lt;&lt;endl;</span></div><div class="line">    st.init(<span class="number">2</span>*n<span class="number">-1</span>);</div><div class="line">    ll ans = <span class="number">0</span>;</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">1</span>; i&lt;=n/<span class="number">2</span>; i++)</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> j=<span class="number">2</span>; i*j&lt;=n; j++)&#123;</div><div class="line">            ans += lca_query(i,i*j);</div><div class="line">        &#125;</div><div class="line">    <span class="built_in">cout</span>&lt;&lt;ans&lt;&lt;<span class="built_in">endl</span>;</div><div class="line">    <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/02/简单的几何学/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/cat.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="JonassenLi">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/09/02/简单的几何学/" itemprop="url">
-                  简单的几何学...
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Veröffentlicht am</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-09-02T11:24:55+08:00">
-                2017-09-02
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">in</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/acm/" itemprop="url" rel="index">
-                    <span itemprop="name">ACM</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>题源：Central Europe Contest 2015 Zagreb H<br>其实是道很无聊的题目了，就求交点判情况有点麻烦..<br>用向量判交点然后手撕一下<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> Cvector&#123;</div><div class="line">    <span class="keyword">double</span> x,y;</div><div class="line">    Cvector()&#123;&#125;</div><div class="line">    Cvector(<span class="keyword">double</span> xx,<span class="keyword">double</span> yy):x(xx),y(yy)&#123;&#125;</div><div class="line">&#125;node[<span class="number">4</span>];</div><div class="line"></div><div class="line"><span class="keyword">struct</span> Cline&#123;</div><div class="line">    Cvector a,b;</div><div class="line">&#125;;</div><div class="line"></div><div class="line">Cvector <span class="keyword">operator</span>-(<span class="keyword">const</span> Cvector &amp;a,<span class="keyword">const</span> Cvector &amp;b)&#123;<span class="keyword">return</span> Cvector(a.x-b.x,a.y-b.y);&#125;</div><div class="line">Cvector <span class="keyword">operator</span>*(<span class="keyword">double</span> k, <span class="keyword">const</span> Cvector &amp;a)       &#123;<span class="keyword">return</span> Cvector(k*a.x,k*a.y);&#125;</div><div class="line">Cvector <span class="keyword">operator</span>+(<span class="keyword">const</span> Cvector &amp;a,<span class="keyword">const</span> Cvector &amp;b)&#123;<span class="keyword">return</span> Cvector(a.x+b.x,a.y+b.y);&#125;</div><div class="line"><span class="keyword">double</span> <span class="keyword">operator</span>*(<span class="keyword">const</span> Cvector &amp;a,<span class="keyword">const</span> Cvector &amp;b) &#123;<span class="keyword">return</span> a.x*b.x+a.y*b.y;&#125;</div><div class="line"><span class="keyword">double</span> <span class="keyword">operator</span>^(<span class="keyword">const</span> Cvector &amp;a,<span class="keyword">const</span> Cvector &amp;b) &#123;<span class="keyword">return</span> a.x*b.y-a.y*b.x;&#125;</div><div class="line"><span class="function"><span class="keyword">double</span> <span class="title">area</span><span class="params">(Cvector a,Cvector b)</span></span>&#123;</div><div class="line">    <span class="keyword">return</span> (a^b)/<span class="number">2</span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function">Cvector <span class="title">intersect</span><span class="params">(Cline l,Cline m,<span class="keyword">int</span> &amp;msg)</span></span>&#123;</div><div class="line">    <span class="keyword">double</span> x = area(m.a-l.a, l.b-l.a);</div><div class="line">    <span class="keyword">double</span> y = area(l.b-l.a, m.b-l.a);</div><div class="line">    <span class="keyword">if</span>(x+y==<span class="number">0</span>)&#123;</div><div class="line">        msg = <span class="number">1</span>;<span class="comment">//平行或者重合</span></div><div class="line">        <span class="keyword">return</span> Cvector(NaN,NaN);</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> m.a+((x/(x+y))*(m.b-m.a));</div><div class="line">&#125;</div><div class="line"></div><div class="line">Cline l[<span class="number">4</span>];</div><div class="line"><span class="function"><span class="keyword">double</span> <span class="title">caly</span><span class="params">(Cline cl,<span class="keyword">double</span> X)</span></span></div><div class="line">&#123;</div><div class="line">    Cvector cross[<span class="number">4</span>];</div><div class="line">    Cvector point[<span class="number">2</span>];</div><div class="line">    <span class="keyword">int</span> pcnt = <span class="number">0</span>,msg;</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">4</span>; i++)</div><div class="line">        cross[i] = intersect(cl,l[i],msg);</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">4</span>; i++)&#123;</div><div class="line">        <span class="keyword">if</span>(cross[i].x &gt;= l[i].a.x &amp;&amp; cross[i].x &lt;= l[i].b.x)</div><div class="line">            point[pcnt++] = cross[i];</div><div class="line">        <span class="keyword">else</span> <span class="keyword">if</span>(cross[i].x &lt;= l[i].a.x &amp;&amp; cross[i].x &gt;= l[i].b.x)</div><div class="line">            point[pcnt++] = cross[i];</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">int</span> nodecnt = <span class="number">0</span>;</div><div class="line">    <span class="keyword">double</span> ans = <span class="number">0</span>;</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">4</span>; i++)</div><div class="line">        <span class="keyword">if</span>(node[i].x&lt;X)</div><div class="line">            nodecnt++;</div><div class="line">    <span class="keyword">if</span>(nodecnt==<span class="number">3</span>)&#123;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">4</span>; i++)</div><div class="line">            <span class="keyword">if</span>(node[i].x&gt;=X)</div><div class="line">                ans += <span class="built_in">abs</span>((point[<span class="number">1</span>]-node[i])^(point[<span class="number">0</span>]-node[i]))/<span class="number">2</span>;</div><div class="line">        ans = <span class="number">5.0</span>*<span class="number">5.0</span>-ans;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">else</span> <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">4</span>; i++)&#123;</div><div class="line">        <span class="keyword">if</span>(node[i].x&lt;X)</div><div class="line">            ans += <span class="built_in">abs</span>((point[<span class="number">1</span>]-node[i])^(point[<span class="number">0</span>]-node[i]))/<span class="number">2</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="built_in">cout</span>&lt;&lt;ans&lt;&lt;<span class="built_in">endl</span>;</div><div class="line">    <span class="keyword">return</span> ans;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">double</span> <span class="title">calx</span><span class="params">(Cline cl,<span class="keyword">double</span> Y)</span></span></div><div class="line">&#123;</div><div class="line">    Cvector cross[<span class="number">4</span>];</div><div class="line">    Cvector point[<span class="number">2</span>];</div><div class="line">    <span class="keyword">int</span> pcnt = <span class="number">0</span>,msg;</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">4</span>; i++)</div><div class="line">        cross[i] = intersect(cl,l[i],msg);</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">4</span>; i++)&#123;</div><div class="line">        <span class="keyword">if</span>(cross[i].x &gt;= l[i].a.x &amp;&amp; cross[i].x &lt;= l[i].b.x)</div><div class="line">            point[pcnt++] = cross[i];</div><div class="line">        <span class="keyword">else</span> <span class="keyword">if</span>(cross[i].x &lt;= l[i].a.x &amp;&amp; cross[i].x &gt;= l[i].b.x)</div><div class="line">            point[pcnt++] = cross[i];</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">double</span> ans = <span class="number">0</span>;</div><div class="line">    <span class="keyword">int</span> nodecnt = <span class="number">0</span>;</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">4</span>; i++)</div><div class="line">        <span class="keyword">if</span>(node[i].y&lt;Y)</div><div class="line">            nodecnt++;</div><div class="line">    <span class="keyword">if</span>(nodecnt==<span class="number">3</span>)&#123;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">4</span>; i++)</div><div class="line">            <span class="keyword">if</span>(node[i].y&gt;=Y)</div><div class="line">                ans += <span class="built_in">abs</span>((point[<span class="number">1</span>]-node[i])^(point[<span class="number">0</span>]-node[i]))/<span class="number">2</span>;</div><div class="line">        ans = <span class="number">5.0</span>*<span class="number">5.0</span>-ans;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">else</span> <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">4</span>; i++)&#123;</div><div class="line">        <span class="keyword">if</span>(node[i].y&lt;Y)</div><div class="line">            ans += <span class="built_in">abs</span>((point[<span class="number">1</span>]-node[i])^(point[<span class="number">0</span>]-node[i]))/<span class="number">2</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="built_in">cout</span>&lt;&lt;ans&lt;&lt;<span class="built_in">endl</span>;</div><div class="line">    <span class="keyword">return</span> ans;</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">4</span>; i++)&#123;</div><div class="line">        <span class="keyword">double</span> x,y;</div><div class="line">        <span class="built_in">scanf</span>(<span class="string">"%lf%lf"</span>,&amp;x,&amp;y);</div><div class="line">        node[i].x =x;   node[i].y  = y;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">3</span>; i++)&#123;</div><div class="line">        l[i].a = node[i];   l[i].b = node[i+<span class="number">1</span>];</div><div class="line">    &#125;</div><div class="line">    l[<span class="number">3</span>].a = node[<span class="number">3</span>];   l[<span class="number">3</span>].b = node[<span class="number">0</span>];</div><div class="line"></div><div class="line">    <span class="keyword">double</span> ans = <span class="number">0</span>;</div><div class="line">    Cline cl;</div><div class="line">    cl.a = Cvector(<span class="number">0.5</span>,<span class="number">0.5</span>);    cl.b = Cvector(<span class="number">0.5</span>,<span class="number">-0.5</span>);</div><div class="line">    ans += <span class="number">3.0</span>*(<span class="number">25.0</span>-caly(cl,<span class="number">0.5</span>));</div><div class="line">    cl.a = Cvector(<span class="number">0.5</span>,<span class="number">-0.5</span>);    cl.b = Cvector(<span class="number">-0.5</span>,<span class="number">-0.5</span>);</div><div class="line">    ans += <span class="number">1.0</span>*(calx(cl,<span class="number">-0.5</span>));</div><div class="line">    cl.a = Cvector(<span class="number">-0.5</span>,<span class="number">-0.5</span>);    cl.b = Cvector(<span class="number">-0.5</span>,<span class="number">0.5</span>);</div><div class="line">    ans += <span class="number">4.0</span>*caly(cl,<span class="number">-0.5</span>);</div><div class="line">    cl.a = Cvector(<span class="number">-0.5</span>,<span class="number">0.5</span>);    cl.b = Cvector(<span class="number">0.5</span>,<span class="number">0.5</span>);</div><div class="line">    ans += <span class="number">6.0</span>*(<span class="number">25.0</span>-calx(cl,<span class="number">0.5</span>));</div><div class="line">    ans *= <span class="number">5</span>;</div><div class="line">    ans += <span class="number">5.0</span>*<span class="number">5.0</span>*<span class="number">5.0</span>*<span class="number">4</span>;</div><div class="line">    ans /= (<span class="number">5.0</span>*<span class="number">5.0</span>*<span class="number">5.0</span><span class="number">-1.0</span>);</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"%.6f\n"</span>,ans);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/28/acm/题解/图论/二分图/Uva-14149 二分图匹配求最小点覆盖/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/cat.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="JonassenLi">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/08/28/acm/题解/图论/二分图/Uva-14149 二分图匹配求最小点覆盖/" itemprop="url">
-                  Uva-14149 二分图匹配求最小点覆盖
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Veröffentlicht am</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-08-28T12:03:34+08:00">
-                2017-08-28
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">in</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/acm/" itemprop="url" rel="index">
-                    <span itemprop="name">ACM</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="Uva-14149"><a href="#Uva-14149" class="headerlink" title="Uva-14149"></a>Uva-14149</h1><h2 id="题意："><a href="#题意：" class="headerlink" title="题意："></a>题意：</h2><p>给一个R*C的矩形网格，每一个小格子内可能有点，求最小选多少行多少列可以覆盖所有的点，并输出这些行和列</p>
-<h2 id="题解："><a href="#题解：" class="headerlink" title="题解："></a>题解：</h2><p>由于类似一个覆盖问题，可以想办法根据矩阵的二维性质构造一个二分图求最小覆盖 。<br>那么使每一行为一个点集每一列为一个点集，(x,y)有点则在x和y之间连一条线。那么最后只需要选点覆盖所有线就行。<br>二分匹配-&gt;最小点覆盖<br>要具体求出哪些点参考以下结论</p>
-<h3 id="一个结论"><a href="#一个结论" class="headerlink" title="一个结论"></a>一个结论</h3><p><strong>从二分最大匹配找到最小点覆盖</strong><br>需要借助匈牙利树： 设二分图两个集合为X Y<br>从X中所有未覆盖点出发进行扩展匈牙利树，标记树当中的所有点，则X当中的未标记点和Y当中的已标记点组成了所求的最小覆盖</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">int</span> R,C,N;</div><div class="line"><span class="keyword">int</span> uN,vN;</div><div class="line"><span class="keyword">int</span> G[MAXN][MAXN];</div><div class="line"><span class="keyword">int</span> Left[MAXN];</div><div class="line"><span class="keyword">int</span> Right[MAXN];</div><div class="line"><span class="keyword">bool</span> S[MAXN],T[MAXN];</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">bool</span> <span class="title">dfs</span><span class="params">(<span class="keyword">int</span> u)</span></span></div><div class="line">&#123;</div><div class="line">    S[u] = <span class="literal">true</span>;</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> v=<span class="number">1</span>; v&lt;=vN;v++)</div><div class="line">    <span class="keyword">if</span>(G[u][v] &amp;&amp; !T[v])&#123;</div><div class="line">        T[v] = <span class="literal">true</span>;</div><div class="line">        <span class="keyword">if</span>(Left[v] == <span class="number">-1</span> || dfs(Left[v]))&#123;</div><div class="line">            Right[u] = v;</div><div class="line">            Left[v] = u;</div><div class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">hungary</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">int</span> res = <span class="number">0</span>;</div><div class="line">    <span class="built_in">memset</span>(Left,<span class="number">-1</span>,<span class="keyword">sizeof</span>(Left));</div><div class="line">    <span class="built_in">memset</span>(Right,<span class="number">-1</span>,<span class="keyword">sizeof</span>(Right));</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> u=<span class="number">1</span>; u&lt;=uN; u++)&#123;</div><div class="line">        <span class="built_in">memset</span>(T,<span class="number">0</span>,<span class="keyword">sizeof</span>(T));</div><div class="line">        <span class="keyword">if</span>(dfs(u)) res++;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> res;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">min_cover</span><span class="params">(<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &amp;X,<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &amp;Y)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">int</span> ans = hungary();</div><div class="line">    X.clear();  Y.clear();</div><div class="line">    <span class="built_in">memset</span>(S,<span class="number">0</span>,<span class="keyword">sizeof</span>(S));</div><div class="line">    <span class="built_in">memset</span>(T,<span class="number">0</span>,<span class="keyword">sizeof</span>(T));</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">1</span>;i&lt;=uN;i++)</div><div class="line">        <span class="keyword">if</span>(Right[i]==<span class="number">-1</span>) dfs(i);</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">1</span>;i&lt;=uN;i++)</div><div class="line">        <span class="keyword">if</span>(!S[i]) X.pb(i);</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> j=<span class="number">1</span>;j&lt;=vN;j++)</div><div class="line">        <span class="keyword">if</span>(T[j]) Y.pb(j);</div><div class="line">    <span class="keyword">return</span> ans;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">    <span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; x,y;</div><div class="line">    <span class="keyword">while</span>(<span class="built_in">scanf</span>(<span class="string">"%d%d%d"</span>,&amp;R,&amp;C,&amp;N))&#123;</div><div class="line">        <span class="keyword">if</span>(R==<span class="number">0</span> &amp;&amp; C==<span class="number">0</span> &amp;&amp; N==<span class="number">0</span>)</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        uN = R; vN = C;</div><div class="line">        <span class="built_in">memset</span>(G,<span class="number">0</span>,<span class="keyword">sizeof</span>(G));</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;N; i++)&#123;</div><div class="line">            <span class="keyword">int</span> y,x;</div><div class="line">            sc(y); sc(x);</div><div class="line">            G[y][x] = <span class="number">1</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">int</span> ans = min_cover(x,y);</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"%d"</span>,ans);</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;x.size(); i++)</div><div class="line">            <span class="built_in">printf</span>(<span class="string">" r%d"</span>,x[i]);</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;y.size(); i++)</div><div class="line">            <span class="built_in">printf</span>(<span class="string">" c%d"</span>,y[i]);</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"\n"</span>);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/27/acm/match/2017-广西邀请赛/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/cat.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="JonassenLi">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/08/27/acm/match/2017-广西邀请赛/" itemprop="url">
-                  2017-广西邀请赛
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Veröffentlicht am</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-08-27T17:25:04+08:00">
-                2017-08-27
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">in</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/acm/" itemprop="url" rel="index">
-                    <span itemprop="name">ACM</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>算是我队第一次打正式赛了吧..全场贡献了几题思路..打表大法是真的强..<br>终榜5题银..还行..</p>
-<h3 id="记录几个要补的题："><a href="#记录几个要补的题：" class="headerlink" title="记录几个要补的题："></a>记录几个要补的题：</h3><ol>
-<li>C: 怎么求三元环</li>
-<li>G: 平面图转对偶图</li>
-<li>K： 暴力哈希KMP</li>
-</ol>
-<h3 id="C"><a href="#C" class="headerlink" title="C"></a>C</h3><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div></pre></td><td class="code"><pre><div class="line">#include &lt;iostream&gt;</div><div class="line">#include &lt;cstdio&gt;</div><div class="line">#include &lt;cctype&gt;</div><div class="line">#include &lt;algorithm&gt;</div><div class="line">#include &lt;cstring&gt;</div><div class="line">#include &lt;string&gt;</div><div class="line">#include &lt;cmath&gt;</div><div class="line">#include &lt;vector&gt;</div><div class="line">#include &lt;set&gt;</div><div class="line">#include &lt;stack&gt;</div><div class="line">#include &lt;sstream&gt;</div><div class="line">#include &lt;queue&gt;</div><div class="line">#include &lt;map&gt;</div><div class="line">#include &lt;functional&gt;</div><div class="line">#include &lt;bitset&gt;</div><div class="line"></div><div class="line">using namespace std;</div><div class="line">#define pb push_back</div><div class="line">#define mk make_pair</div><div class="line">#define ll long long</div><div class="line">#define ull unsigned long long</div><div class="line">#define pii pair&lt;int, int&gt;</div><div class="line">#define mkp make_pair</div><div class="line">#define fst first</div><div class="line">#define scd second</div><div class="line">#define ALL(A) A.begin(), A.end()</div><div class="line">#define REP(i,n) for(int (i)=0;(i)&lt;(int)(n);(i)++)</div><div class="line">#define REP1(i, n) for(int (i)=1;(i)&lt;=(int)(n);(i)++)</div><div class="line">#define fastio ios::sync_with_stdio(0), cin.tie(0)</div><div class="line">#define frein freopen("in.txt", "r", stdin)</div><div class="line">#define freout freopen("out.txt", "w", stdout)</div><div class="line">#define freout1 freopen("out1.txt", "w", stdout)</div><div class="line">#define PI M_PI</div><div class="line">#define MAXN 100000</div><div class="line">#define xork(a,b) ((b&amp;1)?(a):(0))</div><div class="line">#define sc(n) scanf("%d",&amp;(n))</div><div class="line"></div><div class="line">ll mod = 10000;</div><div class="line">ll INF = 1LL&lt;&lt;60LL;</div><div class="line">const double eps = 1e-8;</div><div class="line">template&lt;typename T&gt; T gcd(T a,T b)</div><div class="line">&#123;if(!b)return a;return gcd(b,a%b);&#125;</div><div class="line">struct edge&#123;</div><div class="line">    int from,to,nxt;</div><div class="line">&#125;E[MAXN*2];</div><div class="line">map&lt;pii,int&gt; mp;</div><div class="line">int head[MAXN];</div><div class="line">int cnt;</div><div class="line">int edgecnt[MAXN];</div><div class="line">int d[MAXN];</div><div class="line">int node[MAXN];</div><div class="line">int ncnt;</div><div class="line"></div><div class="line">void add_edge(int f,int t)&#123;</div><div class="line">    E[cnt].to = t; E[cnt].nxt = head[f];</div><div class="line">    head[f] = cnt;</div><div class="line">    mp[mkp(f,t)] = cnt/2;</div><div class="line">    mp[mkp(t,f)] = cnt/2;</div><div class="line">    cnt++;</div><div class="line">    E[cnt].to = f; E[cnt].nxt = head[t];</div><div class="line">    head[t] = cnt;</div><div class="line">    cnt++;</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main()</div><div class="line">&#123;</div><div class="line">    //freout;</div><div class="line">    int n,m;</div><div class="line">    while(~scanf("%d%d",&amp;n,&amp;m))&#123;</div><div class="line">        cnt = 0;</div><div class="line">        memset(head,-1,sizeof(head));</div><div class="line">        memset(d,0,sizeof(d));</div><div class="line">        memset(edgecnt,0,sizeof(edgecnt));</div><div class="line">        mp.clear();</div><div class="line">        for(int i=0; i&lt;m; i++)&#123;</div><div class="line">            int u,v;</div><div class="line">            sc(u); sc(v);</div><div class="line">            add_edge(u,v);</div><div class="line">            d[u]++,d[v]++;</div><div class="line">        &#125;</div><div class="line">        int x = (int)sqrt(m);</div><div class="line">        ncnt = 0;</div><div class="line">        for(int i=1; i&lt;=n; i++)&#123;</div><div class="line">            if(d[i]&lt;=x)&#123;</div><div class="line">                for(int j=head[i]; j!=-1; j=E[j].nxt)&#123;</div><div class="line">                    int u = E[j].to;</div><div class="line">                    for(int k=E[j].nxt; k!=-1; k=E[k].nxt)&#123;</div><div class="line">                        int v = E[k].to;</div><div class="line">                        if(mp.count(mkp(u,v)))&#123;</div><div class="line">                            edgecnt[mp[mkp(u,v)]]++;</div><div class="line">                        &#125;</div><div class="line">                    &#125;</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">            else&#123;</div><div class="line">                node[ncnt++] = i;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        for(int i=0; i&lt;ncnt; i++)&#123;</div><div class="line">            int u = node[i];</div><div class="line">            for(int j=i+1; j&lt;ncnt; j++)&#123;</div><div class="line">                int v = node[j];</div><div class="line">                if(mp.count(mkp(u,v)))</div><div class="line">                for(int k=j+1; k&lt;ncnt; k++)&#123;</div><div class="line">                    int z = node[k];</div><div class="line">                    if(mp.count(mkp(v,z)) &amp;&amp; mp.count(mkp(u,z)))&#123;</div><div class="line">                        edgecnt[mp[mkp(v,z)]]++;</div><div class="line">                        edgecnt[mp[mkp(u,z)]]++;</div><div class="line">                        edgecnt[mp[mkp(u,v)]]++;</div><div class="line">                    &#125;</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        ll ans = 0;</div><div class="line">        for(int i=0;i&lt;m; i++)&#123;</div><div class="line">            ll c = edgecnt[i];</div><div class="line">            ans += c*(c-1)/2;</div><div class="line">        &#125;</div><div class="line">        cout&lt;&lt;ans&lt;&lt;endl;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1699,7 +1742,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">25</span>
+                <span class="site-state-item-count">30</span>
                 <span class="site-state-item-name">Artikel</span>
               </a>
             </div>
@@ -1721,7 +1764,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">26</span>
+                <span class="site-state-item-count">31</span>
                 <span class="site-state-item-name">Tags</span>
               </a>
             </div>
@@ -1905,6 +1948,28 @@
   
 
   
+  
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+
 
   
 

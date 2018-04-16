@@ -1,0 +1,705 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="tensorflow,CV,ML," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="使用卷积神经网络预测minist手写数字minist是一个入门的标准cv集。详细注释见minist当中注释直接上代码1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071727374757">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Using tensorflow on Minist">
+<meta property="og:url" content="http://yoursite.com/2018/03/31/machinelearning/tensorflow_notes/tf_minist/index.html">
+<meta property="og:site_name" content="JonassenLi">
+<meta property="og:description" content="使用卷积神经网络预测minist手写数字minist是一个入门的标准cv集。详细注释见minist当中注释直接上代码1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071727374757">
+<meta property="og:image" content="http://yoursite.com/./images/tf/tf_api.png">
+<meta property="og:updated_time" content="2018-04-16T05:07:08.666Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Using tensorflow on Minist">
+<meta name="twitter:description" content="使用卷积神经网络预测minist手写数字minist是一个入门的标准cv集。详细注释见minist当中注释直接上代码1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071727374757">
+<meta name="twitter:image" content="http://yoursite.com/./images/tf/tf_api.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/03/31/machinelearning/tensorflow_notes/tf_minist/"/>
+
+
+
+
+
+  <title> Using tensorflow on Minist | JonassenLi </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JonassenLi</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Startseite
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Kategorien
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archiv
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/31/machinelearning/tensorflow_notes/tf_minist/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="muchenli">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/cat.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JonassenLi">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Using tensorflow on Minist
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-31T11:31:00+08:00">
+                2018-03-31
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="使用卷积神经网络预测minist手写数字"><a href="#使用卷积神经网络预测minist手写数字" class="headerlink" title="使用卷积神经网络预测minist手写数字"></a>使用卷积神经网络预测minist手写数字</h1><p>minist是一个入门的标准cv集。<br>详细注释见minist当中注释<br>直接上代码<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div></pre></td><td class="code"><pre><div class="line"><span class="string">"""Convolutional Neural Network Estimator for MNIST, built with tf.layers."""</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> __future__ <span class="keyword">import</span> absolute_import</div><div class="line"><span class="keyword">from</span> __future__ <span class="keyword">import</span> division</div><div class="line"><span class="keyword">from</span> __future__ <span class="keyword">import</span> print_function</div><div class="line"></div><div class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</div><div class="line"><span class="keyword">import</span> tensorflow <span class="keyword">as</span> tf</div><div class="line"></div><div class="line">tf.logging.set_verbosity(tf.logging.INFO)</div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">cnn_model_fn</span><span class="params">(features, labels, mode)</span>:</span></div><div class="line">  <span class="string">"""Model function for CNN."""</span></div><div class="line">  <span class="comment"># Input Layer</span></div><div class="line">  <span class="comment"># Reshape X to 4-D tensor: [batch_size, width, height, channels]</span></div><div class="line">  <span class="comment"># MNIST images are 28x28 pixels, and have one color channel</span></div><div class="line">  input_layer = tf.reshape(features[<span class="string">"x"</span>], [<span class="number">-1</span>, <span class="number">28</span>, <span class="number">28</span>, <span class="number">1</span>])</div><div class="line"></div><div class="line">  <span class="comment"># Convolutional Layer #1</span></div><div class="line">  <span class="comment"># Computes 32 features using a 5x5 filter with ReLU activation.</span></div><div class="line">  <span class="comment"># Padding is added to preserve width and height.</span></div><div class="line">  <span class="comment"># Input Tensor Shape: [batch_size, 28, 28, 1]</span></div><div class="line">  <span class="comment"># Output Tensor Shape: [batch_size, 28, 28, 32]</span></div><div class="line">  conv1 = tf.layers.conv2d(</div><div class="line">      inputs=input_layer,</div><div class="line">      filters=<span class="number">32</span>,</div><div class="line">      kernel_size=[<span class="number">5</span>, <span class="number">5</span>],</div><div class="line">      padding=<span class="string">"same"</span>,</div><div class="line">      activation=tf.nn.relu)</div><div class="line"></div><div class="line">  <span class="comment"># Pooling Layer #1</span></div><div class="line">  <span class="comment"># First max pooling layer with a 2x2 filter and stride of 2</span></div><div class="line">  <span class="comment"># Input Tensor Shape: [batch_size, 28, 28, 32]</span></div><div class="line">  <span class="comment"># Output Tensor Shape: [batch_size, 14, 14, 32]</span></div><div class="line">  pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[<span class="number">2</span>, <span class="number">2</span>], strides=<span class="number">2</span>)</div><div class="line"></div><div class="line">  <span class="comment"># Convolutional Layer #2</span></div><div class="line">  <span class="comment"># Computes 64 features using a 5x5 filter.</span></div><div class="line">  <span class="comment"># Padding is added to preserve width and height.</span></div><div class="line">  <span class="comment"># Input Tensor Shape: [batch_size, 14, 14, 32]</span></div><div class="line">  <span class="comment"># Output Tensor Shape: [batch_size, 14, 14, 64]</span></div><div class="line">  conv2 = tf.layers.conv2d(</div><div class="line">      inputs=pool1,</div><div class="line">      filters=<span class="number">64</span>,</div><div class="line">      kernel_size=[<span class="number">5</span>, <span class="number">5</span>],</div><div class="line">      padding=<span class="string">"same"</span>,</div><div class="line">      activation=tf.nn.relu)</div><div class="line"></div><div class="line">  <span class="comment"># Pooling Layer #2</span></div><div class="line">  <span class="comment"># Second max pooling layer with a 2x2 filter and stride of 2</span></div><div class="line">  <span class="comment"># Input Tensor Shape: [batch_size, 14, 14, 64]</span></div><div class="line">  <span class="comment"># Output Tensor Shape: [batch_size, 7, 7, 64]</span></div><div class="line">  pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[<span class="number">2</span>, <span class="number">2</span>], strides=<span class="number">2</span>)</div><div class="line"></div><div class="line">  <span class="comment"># Flatten tensor into a batch of vectors</span></div><div class="line">  <span class="comment"># Input Tensor Shape: [batch_size, 7, 7, 64]</span></div><div class="line">  <span class="comment"># Output Tensor Shape: [batch_size, 7 * 7 * 64]</span></div><div class="line">  pool2_flat = tf.reshape(pool2, [<span class="number">-1</span>, <span class="number">7</span> * <span class="number">7</span> * <span class="number">64</span>])</div><div class="line"></div><div class="line">  <span class="comment"># Dense Layer</span></div><div class="line">  <span class="comment"># Densely connected layer with 1024 neurons</span></div><div class="line">  <span class="comment"># Input Tensor Shape: [batch_size, 7 * 7 * 64]</span></div><div class="line">  <span class="comment"># Output Tensor Shape: [batch_size, 1024]</span></div><div class="line">  dense = tf.layers.dense(inputs=pool2_flat, units=<span class="number">1024</span>, activation=tf.nn.relu)</div><div class="line"></div><div class="line">  <span class="comment"># Add dropout operation; 0.6 probability that element will be kept</span></div><div class="line">  dropout = tf.layers.dropout(</div><div class="line">      inputs=dense, rate=<span class="number">0.4</span>, training=mode == tf.estimator.ModeKeys.TRAIN)</div><div class="line"></div><div class="line">  <span class="comment"># Logits layer</span></div><div class="line">  <span class="comment"># Input Tensor Shape: [batch_size, 1024]</span></div><div class="line">  <span class="comment"># Output Tensor Shape: [batch_size, 10]</span></div><div class="line">  logits = tf.layers.dense(inputs=dropout, units=<span class="number">10</span>)</div><div class="line"></div><div class="line">  predictions = &#123;</div><div class="line">      <span class="comment"># Generate predictions (for PREDICT and EVAL mode)</span></div><div class="line">      <span class="string">"classes"</span>: tf.argmax(input=logits, axis=<span class="number">1</span>),</div><div class="line">      <span class="comment"># Add `softmax_tensor` to the graph. It is used for PREDICT and by the</span></div><div class="line">      <span class="comment"># `logging_hook`.</span></div><div class="line">      <span class="string">"probabilities"</span>: tf.nn.softmax(logits, name=<span class="string">"softmax_tensor"</span>)</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">if</span> mode == tf.estimator.ModeKeys.PREDICT:</div><div class="line">    <span class="keyword">return</span> tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)</div><div class="line"></div><div class="line">  <span class="comment"># Calculate Loss (for both TRAIN and EVAL modes)</span></div><div class="line">  loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)</div><div class="line"></div><div class="line">  <span class="comment"># Configure the Training Op (for TRAIN mode)</span></div><div class="line">  <span class="keyword">if</span> mode == tf.estimator.ModeKeys.TRAIN:</div><div class="line">    optimizer = tf.train.GradientDescentOptimizer(learning_rate=<span class="number">0.001</span>)</div><div class="line">    train_op = optimizer.minimize(</div><div class="line">        loss=loss,</div><div class="line">        global_step=tf.train.get_global_step())</div><div class="line">    <span class="keyword">return</span> tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)</div><div class="line"></div><div class="line">  <span class="comment"># Add evaluation metrics (for EVAL mode)</span></div><div class="line">  eval_metric_ops = &#123;</div><div class="line">      <span class="string">"accuracy"</span>: tf.metrics.accuracy(</div><div class="line">          labels=labels, predictions=predictions[<span class="string">"classes"</span>])&#125;</div><div class="line">  <span class="keyword">return</span> tf.estimator.EstimatorSpec(</div><div class="line">      mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)</div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">main</span><span class="params">(unused_argv)</span>:</span></div><div class="line">  <span class="comment"># Load training and eval data</span></div><div class="line">  mnist = tf.contrib.learn.datasets.load_dataset(<span class="string">"mnist"</span>)</div><div class="line">  train_data = mnist.train.images  <span class="comment"># Returns np.array</span></div><div class="line">  train_labels = np.asarray(mnist.train.labels, dtype=np.int32)</div><div class="line">  eval_data = mnist.test.images  <span class="comment"># Returns np.array</span></div><div class="line">  eval_labels = np.asarray(mnist.test.labels, dtype=np.int32)</div><div class="line"></div><div class="line">  <span class="comment"># Create the Estimator</span></div><div class="line">  mnist_classifier = tf.estimator.Estimator(</div><div class="line">      model_fn=cnn_model_fn, model_dir=<span class="string">"/tmp/mnist_convnet_model"</span>)</div><div class="line"></div><div class="line">  <span class="comment"># Set up logging for predictions</span></div><div class="line">  <span class="comment"># Log the values in the "Softmax" tensor with label "probabilities"</span></div><div class="line">  tensors_to_log = &#123;<span class="string">"probabilities"</span>: <span class="string">"softmax_tensor"</span>&#125;</div><div class="line">  logging_hook = tf.train.LoggingTensorHook(</div><div class="line">      tensors=tensors_to_log, every_n_iter=<span class="number">50</span>)</div><div class="line"></div><div class="line">  <span class="comment"># Train the model</span></div><div class="line">  train_input_fn = tf.estimator.inputs.numpy_input_fn(</div><div class="line">      x=&#123;<span class="string">"x"</span>: train_data&#125;,</div><div class="line">      y=train_labels,</div><div class="line">      batch_size=<span class="number">100</span>,</div><div class="line">      num_epochs=<span class="keyword">None</span>,</div><div class="line">      shuffle=<span class="keyword">True</span>)</div><div class="line">  mnist_classifier.train(</div><div class="line">      input_fn=train_input_fn,</div><div class="line">      steps=<span class="number">20000</span>,</div><div class="line">      hooks=[logging_hook])</div><div class="line"></div><div class="line">  <span class="comment"># Evaluate the model and print results</span></div><div class="line">  eval_input_fn = tf.estimator.inputs.numpy_input_fn(</div><div class="line">      x=&#123;<span class="string">"x"</span>: eval_data&#125;,</div><div class="line">      y=eval_labels,</div><div class="line">      num_epochs=<span class="number">1</span>,</div><div class="line">      shuffle=<span class="keyword">False</span>)</div><div class="line">  eval_results = mnist_classifier.evaluate(input_fn=eval_input_fn)</div><div class="line">  print(eval_results)</div><div class="line"></div><div class="line"></div><div class="line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</div><div class="line">  tf.app.run()</div></pre></td></tr></table></figure></p>
+<p>目前我没弄懂的一点在于，这个框架没用session 也没用eager mode是怎么跑起来的， 如果我想可视化地观察一下这个卷积神经网络的结构又该怎么做呢？</p>
+<p>有点明白了，官方的doc当中有这么一句话：<br>Estimators build the graph for you. In other words, you don’t have to build the graph.  </p>
+<p>其实在一开始应该早就说明白过了，tensorflow的api是分层级的:<br><img src="./images/tf/tf_api.png" alt=""></p>
+<p>如上图estimator 和eager mode是同一层级的，它会自动的帮你构建整个图</p>
+<p>TODO: 试着跑一遍代码，用log记录下图的结构，然后在tensorboard里面打开康康。  </p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/tensorflow/" rel="tag"># tensorflow</a>
+          
+            <a href="/tags/CV/" rel="tag"># CV</a>
+          
+            <a href="/tags/ML/" rel="tag"># ML</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/03/30/machinelearning/tensorflow_notes/note2/" rel="next" title="TensorFlow 学习笔记2">
+                <i class="fa fa-chevron-left"></i> TensorFlow 学习笔记2
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/04/11/machinelearning/tensorflow_notes/note3/" rel="prev" title="TensorFlow 学习笔记3 Manage EXperiments">
+                TensorFlow 学习笔记3 Manage EXperiments <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Inhaltsverzeichnis
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Übersicht
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/cat.jpg"
+               alt="muchenli" />
+          <p class="site-author-name" itemprop="name">muchenli</p>
+           
+              <p class="site-description motion-element" itemprop="description">salty fish jojo23333's personal page</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">30</span>
+                <span class="site-state-item-name">Artikel</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">Kategorien</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">Tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/jojo23333" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#使用卷积神经网络预测minist手写数字"><span class="nav-number">1.</span> <span class="nav-text">使用卷积神经网络预测minist手写数字</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">muchenli</span>
+</div>
+
+
+<div class="powered-by">
+  Erstellt mit  <a class="theme-link" href="https://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+  
+
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

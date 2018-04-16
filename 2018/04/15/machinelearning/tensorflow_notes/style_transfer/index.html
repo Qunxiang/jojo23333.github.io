@@ -1,0 +1,772 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="CNN，tensorflow," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="实验提要刚做完CS20的assignmet 2，因为是第一个tensorflow项目，虽然很多不知道怎么做借鉴了别人的代码，整个代码框架大致是搞懂了，姑且留个记录。
+整个实验基本上是对A Neural Algorithm of Artistic Style这篇文章的一个实现。实验提供了一些框架代码，可以在git上这里找到
+原论文以及主要观点特点A Neural Algorithm of Artis">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Image Style Transfer based on CNN">
+<meta property="og:url" content="http://yoursite.com/2018/04/15/machinelearning/tensorflow_notes/style_transfer/index.html">
+<meta property="og:site_name" content="JonassenLi">
+<meta property="og:description" content="实验提要刚做完CS20的assignmet 2，因为是第一个tensorflow项目，虽然很多不知道怎么做借鉴了别人的代码，整个代码框架大致是搞懂了，姑且留个记录。
+整个实验基本上是对A Neural Algorithm of Artistic Style这篇文章的一个实现。实验提供了一些框架代码，可以在git上这里找到
+原论文以及主要观点特点A Neural Algorithm of Artis">
+<meta property="og:image" content="http://yoursite.com/./images/tf/VGGNet.png">
+<meta property="og:updated_time" content="2018-04-16T06:28:57.477Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Image Style Transfer based on CNN">
+<meta name="twitter:description" content="实验提要刚做完CS20的assignmet 2，因为是第一个tensorflow项目，虽然很多不知道怎么做借鉴了别人的代码，整个代码框架大致是搞懂了，姑且留个记录。
+整个实验基本上是对A Neural Algorithm of Artistic Style这篇文章的一个实现。实验提供了一些框架代码，可以在git上这里找到
+原论文以及主要观点特点A Neural Algorithm of Artis">
+<meta name="twitter:image" content="http://yoursite.com/./images/tf/VGGNet.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/04/15/machinelearning/tensorflow_notes/style_transfer/"/>
+
+
+
+
+
+  <title> Image Style Transfer based on CNN | JonassenLi </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JonassenLi</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Startseite
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Kategorien
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archiv
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/15/machinelearning/tensorflow_notes/style_transfer/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="muchenli">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/cat.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JonassenLi">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Image Style Transfer based on CNN
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-04-15T20:18:00+08:00">
+                2018-04-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="实验提要"><a href="#实验提要" class="headerlink" title="实验提要"></a>实验提要</h2><p>刚做完CS20的assignmet 2，因为是第一个tensorflow项目，虽然很多不知道怎么做借鉴了别人的代码，整个代码框架大致是搞懂了，姑且留个记录。</p>
+<p>整个实验基本上是对<a href="https://arxiv.org/pdf/1508.06576.pdf" target="_blank" rel="external">A Neural Algorithm of Artistic Style</a><br>这篇文章的一个实现。实验提供了一些框架代码，可以在<a href="https://github.com/chiphuyen/stanford-tensorflow-tutorials/tree/master/assignments/02_style_transfer" target="_blank" rel="external">git上这里</a>找到</p>
+<h2 id="原论文以及主要观点"><a href="#原论文以及主要观点" class="headerlink" title="原论文以及主要观点"></a>原论文以及主要观点</h2><h3 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h3><p>A Neural Algorithm of Artistic Style 这篇文章发表2016，还算比较新的文章。<br>文章的主要点在于它发现了在CNN当中图片的内容和图片的风格是可以分离的，因而可以独立的处理这些表示生成新的有意义的图片（虽然我也没完全弄懂他的意思），原文如下：</p>
+<blockquote>
+<p>“The key finding of this paper is that the representations of content and style in the Convolutional Neural Network are separable. That is, we can manipulate both representations independently to produce new, perceptually meaningful images.”</p>
+</blockquote>
+<h3 id="VGG-Network-结构"><a href="#VGG-Network-结构" class="headerlink" title="VGG-Network 结构"></a>VGG-Network 结构</h3><p>文章使用的实现方法基于VGG-Network，在cs231n的<a href="http://cs231n.github.io/convolutional-networks/" target="_blank" rel="external">这个课件</a>里有对VGG-Net的简要介绍    </p>
+<blockquote>
+<p>VGGNet. The runner-up in ILSVRC 2014 was the network from Karen Simonyan and Andrew Zisserman that became known as the VGGNet. Its main contribution was in showing that the depth of the network is a critical component for good performance. Their final best network contains 16 CONV/FC layers and, appealingly, <strong>features an extremely homogeneous architecture that only performs 3x3 convolutions and 2x2 pooling from the beginning to the end.</strong> Their pretrained model is available for plug and play use in Caffe. A downside of the VGGNet is that it is more expensive to evaluate and uses a lot more memory and parameters (140M). Most of these parameters are in the first fully connected layer, and it was since found that these FC layers can be removed with no performance downgrade, significantly reducing the number of necessary parameters.</p>
+</blockquote>
+<p>VGGnet的网络参数如图所示  </p>
+<p><img src="./images/tf/VGGNet.png" alt="VGGNet achitecture"></p>
+<h3 id="基于VGGnet-的实现"><a href="#基于VGGnet-的实现" class="headerlink" title="基于VGGnet 的实现"></a>基于VGGnet 的实现</h3><p>文章使用了VGGNet当中的16层卷积层和5层pooling层,去掉了全连接层，并使用average pooling策略替换max pooling策略</p>
+<h4 id="lose-function"><a href="#lose-function" class="headerlink" title="lose function"></a>lose function</h4><p>关于怎么定义loss function,想法比较自然<br>在图像内容附近通过白噪声初始化一个输出的结果，然后通过网络对这个结果进行风格和内容两方面的约束进行修正。<br><strong>content loss</strong><br>设置一个白点噪声的初始图像和原图像输入网络，在某一层的输出$l$处,F和P分别为其特征表述，则取其方差为content loss</p>
+<p>$$ L_{content}(\vec p,\vec x, l) = \frac{1}{2}\sum_{i,j}(F_{ij}^{l}-P_{ij}^{l})^2 $$</p>
+<p><strong>Gram矩阵</strong></p>
+<p>Gram Matrix实际上可看做是feature之间的偏心协方差矩阵（即没有减去均值的协方差矩阵）<br>协方差矩阵可写成：</p>
+<p>$$ \sum  = E[(X-E(X))(X-E(X))^T]$$<br>Gram矩阵可写成</p>
+<p>$$ G = A * A^{T} $$</p>
+<p><strong>style loss</strong>  </p>
+<p>在CNN每一层反馈的基础上，对每一层的激励结果求其Gram矩阵,同样是对生成图像和原图像，在某一层l生成的两个Gram矩阵G、A<br>这一层loss贡献为：</p>
+<p>$$ E_l = \frac{1}{4N_l^2M_l^2}\sum_{i,j}(G_{ij}^l-A_{ij}^l)^2$$</p>
+<p>对每一层的loss进行加权求和，得到总的loss为</p>
+<p>$$ L_{style}(\vec a,\vec x) = \sum_{l=0}^Lw_lE_l$$</p>
+<p>给定content loss和style loss分别的权重为$\alpha$和$\beta$，总的优化目标为</p>
+<p>$$ L_{total}(\vec p,\vec a,\vec x)=\alpha L_{content}(\vec p,\vec x)+\beta L_{style}(\vec a,\vec x)$$</p>
+<p><strong>思考</strong><br>有关于为什么要使用gram matrix来度量风格，当同一个维度上面的值相乘的时候原来越小酒变得更小，原来越大就变得越大，二不同维度上的关系也在相乘的表达当中表示出来,因而gram matrix能有效度量各个维度自己的特性以及各个维度之间的关系</p>
+<h2 id="基于tensorflow的实现"><a href="#基于tensorflow的实现" class="headerlink" title="基于tensorflow的实现"></a>基于tensorflow的实现</h2><h3 id="代码框架"><a href="#代码框架" class="headerlink" title="代码框架"></a>代码框架</h3><ul>
+<li>utils.py  一些辅助函数</li>
+<li>load_vgg.py  从已经训练好的参数当中加载vggnet</li>
+<li>style_transfer.py 构建风格转化的模型</li>
+</ul>
+<h3 id="load-vgg-py"><a href="#load-vgg-py" class="headerlink" title="load_vgg.py"></a>load_vgg.py</h3><p>这个模块中的主要任务是搭建vggnet，在load方法当中调用conv2d_relu生成卷积层，调用avgpool生成pooling层<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">conv2d_relu</span><span class="params">(self, prev_layer, layer_idx, layer_name)</span>:</span></div><div class="line">    <span class="keyword">with</span> tf.variable_scope(layer_name):</div><div class="line">                w, b = self._weights(layer_idx, layer_name)</div><div class="line">                w = tf.constant(w, name=<span class="string">"weight"</span>)</div><div class="line">                b = tf.constant(b, name=<span class="string">"bais"</span>)</div><div class="line">                conv2d = tf.nn.conv2d(input = prev_layer,</div><div class="line">                                    filter = w,</div><div class="line">                                    strides = [<span class="number">1</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">1</span>],</div><div class="line">                                    padding = <span class="string">"SAME"</span>,</div><div class="line">                                    name = layer_name)</div><div class="line">                out = tf.nn.relu(conv2d + b)</div><div class="line">        setattr(self, layer_name, out)</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">avgpool</span><span class="params">(self, prev_layer, layer_name)</span>:</span></div><div class="line"></div><div class="line">        <span class="keyword">with</span> tf.variable_scope(layer_name):</div><div class="line">            out = tf.nn.avg_pool(prev_layer,</div><div class="line">                                ksize=[<span class="number">1</span>,<span class="number">2</span>,<span class="number">2</span>,<span class="number">1</span>],</div><div class="line">                                strides=[<span class="number">1</span>,<span class="number">2</span>,<span class="number">2</span>,<span class="number">1</span>],</div><div class="line">                                padding=<span class="string">"SAME"</span>)</div><div class="line"></div><div class="line">        setattr(self, layer_name, out)</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">load</span><span class="params">(self)</span>:</span></div><div class="line">        self.conv2d_relu(self.input_img, <span class="number">0</span>, <span class="string">'conv1_1'</span>)</div><div class="line">        self.conv2d_relu(self.conv1_1, <span class="number">2</span>, <span class="string">'conv1_2'</span>)</div><div class="line">        self.avgpool(self.conv1_2, <span class="string">'avgpool1'</span>)</div><div class="line">        self.conv2d_relu(self.avgpool1, <span class="number">5</span>, <span class="string">'conv2_1'</span>)</div><div class="line">        self.conv2d_relu(self.conv2_1, <span class="number">7</span>, <span class="string">'conv2_2'</span>)</div><div class="line">        self.avgpool(self.conv2_2, <span class="string">'avgpool2'</span>)</div><div class="line">        self.conv2d_relu(self.avgpool2, <span class="number">10</span>, <span class="string">'conv3_1'</span>)</div><div class="line">        self.conv2d_relu(self.conv3_1, <span class="number">12</span>, <span class="string">'conv3_2'</span>)</div><div class="line">        self.conv2d_relu(self.conv3_2, <span class="number">14</span>, <span class="string">'conv3_3'</span>)</div><div class="line">        self.conv2d_relu(self.conv3_3, <span class="number">16</span>, <span class="string">'conv3_4'</span>)</div><div class="line">        self.avgpool(self.conv3_4, <span class="string">'avgpool3'</span>)</div><div class="line">        self.conv2d_relu(self.avgpool3, <span class="number">19</span>, <span class="string">'conv4_1'</span>)</div><div class="line">        self.conv2d_relu(self.conv4_1, <span class="number">21</span>, <span class="string">'conv4_2'</span>)</div><div class="line">        self.conv2d_relu(self.conv4_2, <span class="number">23</span>, <span class="string">'conv4_3'</span>)</div><div class="line">        self.conv2d_relu(self.conv4_3, <span class="number">25</span>, <span class="string">'conv4_4'</span>)</div><div class="line">        self.avgpool(self.conv4_4, <span class="string">'avgpool4'</span>)</div><div class="line">        self.conv2d_relu(self.avgpool4, <span class="number">28</span>, <span class="string">'conv5_1'</span>)</div><div class="line">        self.conv2d_relu(self.conv5_1, <span class="number">30</span>, <span class="string">'conv5_2'</span>)</div><div class="line">        self.conv2d_relu(self.conv5_2, <span class="number">32</span>, <span class="string">'conv5_3'</span>)</div><div class="line">        self.conv2d_relu(self.conv5_3, <span class="number">34</span>, <span class="string">'conv5_4'</span>)</div><div class="line">        self.avgpool(self.conv5_4, <span class="string">'avgpool5'</span>)</div></pre></td></tr></table></figure></p>
+<p>有关conv2d的参数解释见之前笔记和<a href="https://www.tensorflow.org/api_docs/python/tf/nn/conv2d" target="_blank" rel="external">这里</a></p>
+<h3 id="style-transfer"><a href="#style-transfer" class="headerlink" title="style_transfer"></a>style_transfer</h3><p>总体分为两部，第一步创建tensorflow图结构，这其中包括：</p>
+<ol>
+<li>使用create_input创建空白图作为输入</li>
+<li>加载vggnet结构</li>
+<li>创建loss</li>
+<li>根据loss创建optimizer</li>
+<li>创建统计数据<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">build</span><span class="params">(self)</span>:</span></div><div class="line">    self.create_input()</div><div class="line">    self.load_vgg()</div><div class="line">    self.losses()</div><div class="line">    self.optimize()</div><div class="line">    self.create_summary()</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>第二步执行训练:  </p>
+<ol>
+<li>初始化全局变量sess.run(tf.global_variables_initializer())</li>
+<li>创建FileWriter (用于TensorBoard)</li>
+<li>创建输入  sess.run(self.input_img.assign(self.initial_img))</li>
+<li>创建checkpoint检查是否要恢复</li>
+<li>循环迭代n次</li>
+<li>最优化opt</li>
+<li>每特定次循环计算保存summary，保存断点<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">train</span><span class="params">(self, n_iters)</span>:</span></div><div class="line">    skip_step = <span class="number">1</span></div><div class="line">    <span class="keyword">with</span> tf.Session() <span class="keyword">as</span> sess:</div><div class="line">        <span class="comment"># 1. initialize</span></div><div class="line">        sess.run(tf.global_variables_initializer())</div><div class="line">        <span class="comment"># 2. create writer</span></div><div class="line">        writer = tf.summary.FileWriter(<span class="string">"graphs/style_transfer"</span>, sess.graph)</div><div class="line">        <span class="comment"># 3. assign input</span></div><div class="line">        sess.run(self.input_img.assign(self.initial_img))</div><div class="line">        <span class="comment"># 4. create checkpoint &amp; restore previous</span></div><div class="line">        saver = tf.train.Saver()</div><div class="line">        ckpt = tf.train.get_checkpoint_state(os.path.dirname(<span class="string">'checkpoints/style_transfer/checkpoint'</span>))</div><div class="line">        <span class="keyword">if</span> ckpt <span class="keyword">and</span> ckpt.model_checkpoint_path:</div><div class="line">            saver.restore(sess, ckpt.model_checkpoint_path)</div><div class="line"></div><div class="line">        initial_step = self.gstep.eval()</div><div class="line">        start_time = time.time()</div><div class="line">        <span class="comment"># 5. iterate for n_iters time</span></div><div class="line">        <span class="keyword">for</span> index <span class="keyword">in</span> range(initial_step, n_iters):</div><div class="line">            <span class="keyword">if</span> index &gt;= <span class="number">5</span> <span class="keyword">and</span> index &lt; <span class="number">20</span>:</div><div class="line">                skip_step = <span class="number">10</span></div><div class="line">            <span class="keyword">elif</span> index &gt;= <span class="number">20</span>:</div><div class="line">                skip_step = <span class="number">20</span></div><div class="line">            <span class="comment"># 6. run optimization</span></div><div class="line">            sess.run(self.opt)</div><div class="line">            <span class="comment"># 7. add summary info \ save checkpoint every number of certain layers</span></div><div class="line">            <span class="keyword">if</span> (index + <span class="number">1</span>) % skip_step == <span class="number">0</span>:</div><div class="line">                gen_image, total_loss, summary = sess.run([self.input_img,</div><div class="line">                                                        self.total_loss,</div><div class="line">                                                        self.summary_op])</div><div class="line">                gen_image = gen_image + self.vgg.mean_pixels </div><div class="line">                writer.add_summary(summary, global_step=index)</div><div class="line">            <span class="comment">#...</span></div><div class="line">            <span class="keyword">if</span> (index + <span class="number">1</span>) % <span class="number">20</span> == <span class="number">0</span>:</div><div class="line">                saver.save (sess, <span class="string">'checkpoints/style_stranfer/style_transfer'</span>, index)</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<h3 id="个人在做完之后的一点思考"><a href="#个人在做完之后的一点思考" class="headerlink" title="个人在做完之后的一点思考"></a>个人在做完之后的一点思考</h3><p>首先这个任务和传统的学习任务不一样。这次学习的对象是需要生成的图像，待生成的图像像素点作为变量在最优化的时候同时被训练。而网络的模型采用他人训练好的参数。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/CNN，tensorflow/" rel="tag"># CNN，tensorflow</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/04/12/machinelearning/tensorflow_notes/note_CNN/" rel="next" title="Convolutional Nerual Networks for Visual Recongnition">
+                <i class="fa fa-chevron-left"></i> Convolutional Nerual Networks for Visual Recongnition
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Inhaltsverzeichnis
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Übersicht
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/cat.jpg"
+               alt="muchenli" />
+          <p class="site-author-name" itemprop="name">muchenli</p>
+           
+              <p class="site-description motion-element" itemprop="description">salty fish jojo23333's personal page</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">30</span>
+                <span class="site-state-item-name">Artikel</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">Kategorien</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">Tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/jojo23333" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#实验提要"><span class="nav-number">1.</span> <span class="nav-text">实验提要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#原论文以及主要观点"><span class="nav-number">2.</span> <span class="nav-text">原论文以及主要观点</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#特点"><span class="nav-number">2.1.</span> <span class="nav-text">特点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#VGG-Network-结构"><span class="nav-number">2.2.</span> <span class="nav-text">VGG-Network 结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于VGGnet-的实现"><span class="nav-number">2.3.</span> <span class="nav-text">基于VGGnet 的实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#lose-function"><span class="nav-number">2.3.1.</span> <span class="nav-text">lose function</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基于tensorflow的实现"><span class="nav-number">3.</span> <span class="nav-text">基于tensorflow的实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#代码框架"><span class="nav-number">3.1.</span> <span class="nav-text">代码框架</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#load-vgg-py"><span class="nav-number">3.2.</span> <span class="nav-text">load_vgg.py</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#style-transfer"><span class="nav-number">3.3.</span> <span class="nav-text">style_transfer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#个人在做完之后的一点思考"><span class="nav-number">3.4.</span> <span class="nav-text">个人在做完之后的一点思考</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">muchenli</span>
+</div>
+
+
+<div class="powered-by">
+  Erstellt mit  <a class="theme-link" href="https://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+  
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

@@ -1,0 +1,743 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="tensorflow," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="Tensorflow 学习笔记 #3keywords :  model base, variable sharing, model sharing
+构建tensorflow模型的一般步骤Phase1: assenmble graph 
+
+Import Data
+Define the weigths
+Define the inferece model
+Define loss function
+Def">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TensorFlow 学习笔记3 Manage EXperiments">
+<meta property="og:url" content="http://yoursite.com/2018/04/11/machinelearning/tensorflow_notes/note3/index.html">
+<meta property="og:site_name" content="JonassenLi">
+<meta property="og:description" content="Tensorflow 学习笔记 #3keywords :  model base, variable sharing, model sharing
+构建tensorflow模型的一般步骤Phase1: assenmble graph 
+
+Import Data
+Define the weigths
+Define the inferece model
+Define loss function
+Def">
+<meta property="og:updated_time" content="2018-04-15T14:10:50.391Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="TensorFlow 学习笔记3 Manage EXperiments">
+<meta name="twitter:description" content="Tensorflow 学习笔记 #3keywords :  model base, variable sharing, model sharing
+构建tensorflow模型的一般步骤Phase1: assenmble graph 
+
+Import Data
+Define the weigths
+Define the inferece model
+Define loss function
+Def">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/04/11/machinelearning/tensorflow_notes/note3/"/>
+
+
+
+
+
+  <title> TensorFlow 学习笔记3 Manage EXperiments | JonassenLi </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JonassenLi</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Startseite
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Kategorien
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archiv
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/11/machinelearning/tensorflow_notes/note3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="muchenli">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/cat.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JonassenLi">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                TensorFlow 学习笔记3 Manage EXperiments
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-04-11T20:59:00+08:00">
+                2018-04-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="Tensorflow-学习笔记-3"><a href="#Tensorflow-学习笔记-3" class="headerlink" title="Tensorflow 学习笔记 #3"></a>Tensorflow 学习笔记 #3</h1><p><strong>keywords</strong> :  model base, variable sharing, model sharing</p>
+<h2 id="构建tensorflow模型的一般步骤"><a href="#构建tensorflow模型的一般步骤" class="headerlink" title="构建tensorflow模型的一般步骤"></a>构建tensorflow模型的一般步骤</h2><p>Phase1: <strong>assenmble graph</strong> </p>
+<ol>
+<li>Import Data</li>
+<li>Define the weigths</li>
+<li>Define the inferece model</li>
+<li>Define loss function</li>
+<li>Define optimizer</li>
+</ol>
+<p>Phase2: <strong>execute the computation</strong></p>
+<ol>
+<li>initialize all model variables for the first time</li>
+<li>Initialize iterator / feed training data</li>
+<li>Excecute the inference model on the training data</li>
+<li>compute cost</li>
+<li>Adjust model parameters to minimize cost </li>
+</ol>
+<p>利用python面向对象的性质为自己的模型简历一个类：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Model</span>:</span></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, params)</span>:</span></div><div class="line">        <span class="keyword">pass</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_import_data</span><span class="params">(self)</span>:</span></div><div class="line">        <span class="string">""" Step 1: import data """</span></div><div class="line">        <span class="keyword">pass</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_create_embedding</span><span class="params">(self)</span>:</span></div><div class="line">        <span class="string">""" Step 2: in word2vec, it's actually the weights that we care about """</span></div><div class="line">        <span class="keyword">pass</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_create_loss</span><span class="params">(self)</span>:</span></div><div class="line">        <span class="string">""" Step 3 + 4: define the inference + the loss function """</span></div><div class="line">        <span class="keyword">pass</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_create_optimizer</span><span class="params">(self)</span>:</span></div><div class="line">        <span class="string">""" Step 5: define optimizer """</span></div><div class="line">        <span class="keyword">pass</span></div></pre></td></tr></table></figure></p>
+<h2 id="Variable-Sharing"><a href="#Variable-Sharing" class="headerlink" title="Variable Sharing"></a>Variable Sharing</h2><h3 id="Name-Scope"><a href="#Name-Scope" class="headerlink" title="Name Scope"></a>Name Scope</h3><pre><code>为了能够在tensor board上较为清晰的辨识出节点之间的关系，引入name_scope可将其分组
+</code></pre><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">with</span> tf.name_scope(name_of_that_scope):</div><div class="line">    <span class="comment"># declare op1</span></div><div class="line">    <span class="comment"># declare op2</span></div><div class="line">    <span class="comment"># declare op3</span></div></pre></td></tr></table></figure>
+<h3 id="Variable-Scope"><a href="#Variable-Scope" class="headerlink" title="Variable Scope"></a>Variable Scope</h3><pre><code>使用Varibale scope来做到变量共享，在variable_scope中使用get_variable方法来获取之前创建的变量而不是新的一个变量
+</code></pre><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">with</span> tf.variable_scope(<span class="string">"xxx"</span>) <span class="keyword">as</span> scope:</div><div class="line">    <span class="comment"># a = tf.get_variable("x",.)..</span></div></pre></td></tr></table></figure>
+<h2 id="tensorflow-实验管理"><a href="#tensorflow-实验管理" class="headerlink" title="tensorflow 实验管理"></a>tensorflow 实验管理</h2><h3 id="使用checkpoint保存训练中间结果"><a href="#使用checkpoint保存训练中间结果" class="headerlink" title="使用checkpoint保存训练中间结果"></a>使用checkpoint保存训练中间结果</h3><p>对于一个需要较长时间训练的模型来说，断点恢复能力是十分必要的。<br>tensorflow也设置了相应的机制，即为checkpoint，可以用来周期性的保存当前模型的参数等数据。<br>实现这一点的是tf.train.Sacer() 类，它会将图的变量保存在二进制文件当中。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">tf.train.Saver.save(</div><div class="line">    sess,</div><div class="line">    save_path,</div><div class="line">    global_step=<span class="keyword">None</span>,</div><div class="line">    latest_filename=<span class="keyword">None</span>,</div><div class="line">    meta_graph_suffix=<span class="string">'meta'</span>,</div><div class="line">    write_meta_graph=<span class="keyword">True</span>,</div><div class="line">    write_state=<span class="keyword">True</span></div><div class="line">)</div></pre></td></tr></table></figure></p>
+<p>常用的保存checkpoint的方法如下所示：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># define model</span></div><div class="line"></div><div class="line"><span class="comment"># create a saver object</span></div><div class="line">saver = tf.train.Saver()</div><div class="line"></div><div class="line"><span class="comment"># launch a session to execute the computation</span></div><div class="line"><span class="keyword">with</span> tf.Session() <span class="keyword">as</span> sess:</div><div class="line">    <span class="comment"># actual training loop</span></div><div class="line">    <span class="keyword">for</span> step <span class="keyword">in</span> range(training_steps): </div><div class="line">	sess.run([optimizer])</div><div class="line">	<span class="keyword">if</span> (step + <span class="number">1</span>) % <span class="number">1000</span> == <span class="number">0</span>:</div><div class="line">	   saver.save(sess, <span class="string">'checkpoint_directory/model_name'</span>, global_step=global_step)</div><div class="line">``` </div><div class="line">这里的global_step是一个用来记录图训练了多少步的变量，创建其的时候需要设置其不能被训练。</div><div class="line">（optimizer默认训练所有变量）</div><div class="line">```python</div><div class="line">global_step = tf.Variable(<span class="number">0</span>, dtype=tf.int32, trainable=<span class="keyword">False</span>, name=<span class="string">'global_step'</span>)</div></pre></td></tr></table></figure></p>
+<p>optimizer一般也接收一个global_step变量的输入，每一次优化更新之后会将global_step的值自增<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">optimizer = tf.train.GradientDescentOptimizer(lr).minimize(loss,global_step=global_step)</div></pre></td></tr></table></figure></p>
+<p>tensorflow还支持在一个文件夹里面找checkpoint,如果有合法的，恢复checkpoint,否则继续执行<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">ckpt = tf.train.get_checkpoint_state(os.path.dirname(<span class="string">'checkpoints/checkpoint'</span>))</div><div class="line"><span class="keyword">if</span> ckpt <span class="keyword">and</span> ckpt.model_checkpoint_path:</div><div class="line">     saver.restore(sess, ckpt.model_checkpoint_path)</div></pre></td></tr></table></figure></p>
+<h3 id="使用tf-summary可视化训练数据"><a href="#使用tf-summary可视化训练数据" class="headerlink" title="使用tf.summary可视化训练数据"></a>使用tf.summary可视化训练数据</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">_create_summaries</span><span class="params">(self)</span>:</span></div><div class="line">     <span class="keyword">with</span> tf.name_scope(<span class="string">"summaries"</span>):</div><div class="line">            tf.summary.scalar(<span class="string">"loss"</span>, self.loss)</div><div class="line">            tf.summary.scalar(<span class="string">"accuracy"</span>, self.accuracy)            </div><div class="line">            tf.summary.histogram(<span class="string">"histogram loss"</span>, self.loss)</div><div class="line">            <span class="comment"># because you have several summaries, we should merge them all</span></div><div class="line">            <span class="comment"># into one op to make it easier to manage</span></div><div class="line">            self.summary_op = tf.summary.merge_all()</div></pre></td></tr></table></figure>
+<p>summary_op和其它operation一样，需要在sess中运行得到结果。<br>得到结果之后使用add_summary把结果写入writer当中，就可以在tensorbord中看到add_summary的图的各种曲线啦<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">writer.add_summary(summary, global_step=step)</div></pre></td></tr></table></figure></p>
+<p>summary的用法参考<a href="https://www.tensorflow.org/programmers_guide/summaries_and_tensorboard" target="_blank" rel="external">这里</a></p>
+<h3 id="control-randomization"><a href="#control-randomization" class="headerlink" title="control randomization"></a>control randomization</h3><h3 id="Auto-diff"><a href="#Auto-diff" class="headerlink" title="Auto diff"></a>Auto diff</h3>
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/tensorflow/" rel="tag"># tensorflow</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/03/31/machinelearning/tensorflow_notes/tf_minist/" rel="next" title="Using tensorflow on Minist">
+                <i class="fa fa-chevron-left"></i> Using tensorflow on Minist
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/04/12/machinelearning/tensorflow_notes/note_CNN/" rel="prev" title="Convolutional Nerual Networks for Visual Recongnition">
+                Convolutional Nerual Networks for Visual Recongnition <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Inhaltsverzeichnis
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Übersicht
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/cat.jpg"
+               alt="muchenli" />
+          <p class="site-author-name" itemprop="name">muchenli</p>
+           
+              <p class="site-description motion-element" itemprop="description">salty fish jojo23333's personal page</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">30</span>
+                <span class="site-state-item-name">Artikel</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">Kategorien</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">Tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/jojo23333" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Tensorflow-学习笔记-3"><span class="nav-number">1.</span> <span class="nav-text">Tensorflow 学习笔记 #3</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#构建tensorflow模型的一般步骤"><span class="nav-number">1.1.</span> <span class="nav-text">构建tensorflow模型的一般步骤</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Variable-Sharing"><span class="nav-number">1.2.</span> <span class="nav-text">Variable Sharing</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Name-Scope"><span class="nav-number">1.2.1.</span> <span class="nav-text">Name Scope</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Variable-Scope"><span class="nav-number">1.2.2.</span> <span class="nav-text">Variable Scope</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tensorflow-实验管理"><span class="nav-number">1.3.</span> <span class="nav-text">tensorflow 实验管理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#使用checkpoint保存训练中间结果"><span class="nav-number">1.3.1.</span> <span class="nav-text">使用checkpoint保存训练中间结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用tf-summary可视化训练数据"><span class="nav-number">1.3.2.</span> <span class="nav-text">使用tf.summary可视化训练数据</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#control-randomization"><span class="nav-number">1.3.3.</span> <span class="nav-text">control randomization</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Auto-diff"><span class="nav-number">1.3.4.</span> <span class="nav-text">Auto diff</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">muchenli</span>
+</div>
+
+
+<div class="powered-by">
+  Erstellt mit  <a class="theme-link" href="https://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+  
+
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>
