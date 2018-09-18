@@ -97,14 +97,14 @@
 <meta property="og:description" content="实验提要刚做完CS20的assignmet 2，因为是第一个tensorflow项目，虽然很多不知道怎么做借鉴了别人的代码，整个代码框架大致是搞懂了，姑且留个记录。
 整个实验基本上是对A Neural Algorithm of Artistic Style这篇文章的一个实现。实验提供了一些框架代码，可以在git上这里找到
 原论文以及主要观点特点A Neural Algorithm of Artis">
-<meta property="og:image" content="http://yoursite.com/./images/tf/VGGNet.png">
-<meta property="og:updated_time" content="2018-04-16T06:28:57.477Z">
+<meta property="og:image" content="http://yoursite.com/images/tf/VGGNet.png">
+<meta property="og:updated_time" content="2018-09-18T08:14:39.491Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Image Style Transfer based on CNN">
 <meta name="twitter:description" content="实验提要刚做完CS20的assignmet 2，因为是第一个tensorflow项目，虽然很多不知道怎么做借鉴了别人的代码，整个代码框架大致是搞懂了，姑且留个记录。
 整个实验基本上是对A Neural Algorithm of Artistic Style这篇文章的一个实现。实验提供了一些框架代码，可以在git上这里找到
 原论文以及主要观点特点A Neural Algorithm of Artis">
-<meta name="twitter:image" content="http://yoursite.com/./images/tf/VGGNet.png">
+<meta name="twitter:image" content="http://yoursite.com/images/tf/VGGNet.png">
 
 
 
@@ -179,7 +179,7 @@
       </a>
     </div>
       
-        <p class="site-subtitle"></p>
+        <p class="site-subtitle">LMC's Notebook</p>
       
   </div>
 
@@ -270,7 +270,7 @@
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/15/machinelearning/tensorflow_notes/style_transfer/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
+      <meta itemprop="name" content="JonassenLi">
       <meta itemprop="description" content="">
       <meta itemprop="image" content="/images/cat.jpg">
     </span>
@@ -350,7 +350,7 @@
 <p>VGGNet. The runner-up in ILSVRC 2014 was the network from Karen Simonyan and Andrew Zisserman that became known as the VGGNet. Its main contribution was in showing that the depth of the network is a critical component for good performance. Their final best network contains 16 CONV/FC layers and, appealingly, <strong>features an extremely homogeneous architecture that only performs 3x3 convolutions and 2x2 pooling from the beginning to the end.</strong> Their pretrained model is available for plug and play use in Caffe. A downside of the VGGNet is that it is more expensive to evaluate and uses a lot more memory and parameters (140M). Most of these parameters are in the first fully connected layer, and it was since found that these FC layers can be removed with no performance downgrade, significantly reducing the number of necessary parameters.</p>
 </blockquote>
 <p>VGGnet的网络参数如图所示  </p>
-<p><img src="./images/tf/VGGNet.png" alt="VGGNet achitecture"></p>
+<p><img src="/images/tf/VGGNet.png" alt="VGGNet achitecture"></p>
 <h3 id="基于VGGnet-的实现"><a href="#基于VGGnet-的实现" class="headerlink" title="基于VGGnet 的实现"></a>基于VGGnet 的实现</h3><p>文章使用了VGGNet当中的16层卷积层和5层pooling层,去掉了全连接层，并使用average pooling策略替换max pooling策略</p>
 <h4 id="lose-function"><a href="#lose-function" class="headerlink" title="lose function"></a>lose function</h4><p>关于怎么定义loss function,想法比较自然<br>在图像内容附近通过白噪声初始化一个输出的结果，然后通过网络对这个结果进行风格和内容两方面的约束进行修正。<br><strong>content loss</strong><br>设置一个白点噪声的初始图像和原图像输入网络，在某一层的输出$l$处,F和P分别为其特征表述，则取其方差为content loss</p>
 <p>$$ L_{content}(\vec p,\vec x, l) = \frac{1}{2}\sum_{i,j}(F_{ij}^{l}-P_{ij}^{l})^2 $$</p>
@@ -440,6 +440,10 @@
 
           <div class="post-nav-prev post-nav-item">
             
+              <a href="/2018/09/15/sensetime/STTN-论文笔记/" rel="prev" title="STTN-论文笔记">
+                STTN-论文笔记 <i class="fa fa-chevron-right"></i>
+              </a>
+            
           </div>
         </div>
       
@@ -499,8 +503,8 @@
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/cat.jpg"
-               alt="muchenli" />
-          <p class="site-author-name" itemprop="name">muchenli</p>
+               alt="JonassenLi" />
+          <p class="site-author-name" itemprop="name">JonassenLi</p>
            
               <p class="site-description motion-element" itemprop="description">salty fish jojo23333's personal page</p>
           
@@ -510,7 +514,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">30</span>
+                <span class="site-state-item-count">32</span>
                 <span class="site-state-item-name">Artikel</span>
               </a>
             </div>
@@ -521,7 +525,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-count">4</span>
                 <span class="site-state-item-name">Kategorien</span>
               </a>
             </div>
@@ -532,7 +536,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-count">33</span>
                 <span class="site-state-item-name">Tags</span>
               </a>
             </div>
@@ -605,7 +609,7 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">muchenli</span>
+  <span class="author" itemprop="copyrightHolder">JonassenLi</span>
 </div>
 
 

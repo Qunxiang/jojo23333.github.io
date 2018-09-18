@@ -1,0 +1,734 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="deeplearning,computer vision," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="论文笔记-STTN ECCV 2018前要刚来sensetime的第一天，在工位上不知所措，下午挑了几篇单目深度估计的文章来看，然后…宇哥晚上跟我说来来来你把这篇文章看一看吧，然后就有了第一个任务。  
+简介这篇文章是ECCV2018的一篇文章 Spatio-Temporal Transformer Network for Video Restoration.现在state of art的Vide">
+<meta property="og:type" content="article">
+<meta property="og:title" content="STTN-论文笔记">
+<meta property="og:url" content="http://yoursite.com/2018/09/15/sensetime/STTN-论文笔记/index.html">
+<meta property="og:site_name" content="JonassenLi">
+<meta property="og:description" content="论文笔记-STTN ECCV 2018前要刚来sensetime的第一天，在工位上不知所措，下午挑了几篇单目深度估计的文章来看，然后…宇哥晚上跟我说来来来你把这篇文章看一看吧，然后就有了第一个任务。  
+简介这篇文章是ECCV2018的一篇文章 Spatio-Temporal Transformer Network for Video Restoration.现在state of art的Vide">
+<meta property="og:image" content="http://yoursite.com/images/sttn/architecture.png">
+<meta property="og:image" content="http://yoursite.com/images/sttn/formu_1.png">
+<meta property="og:image" content="http://yoursite.com/images/sttn/formu_2.png">
+<meta property="og:image" content="http://yoursite.com/images/sttn/architecture2.png">
+<meta property="og:updated_time" content="2018-09-18T09:13:17.769Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="STTN-论文笔记">
+<meta name="twitter:description" content="论文笔记-STTN ECCV 2018前要刚来sensetime的第一天，在工位上不知所措，下午挑了几篇单目深度估计的文章来看，然后…宇哥晚上跟我说来来来你把这篇文章看一看吧，然后就有了第一个任务。  
+简介这篇文章是ECCV2018的一篇文章 Spatio-Temporal Transformer Network for Video Restoration.现在state of art的Vide">
+<meta name="twitter:image" content="http://yoursite.com/images/sttn/architecture.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/09/15/sensetime/STTN-论文笔记/"/>
+
+
+
+
+
+  <title> STTN-论文笔记 | JonassenLi </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JonassenLi</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">LMC's Notebook</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Startseite
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Kategorien
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archiv
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/09/15/sensetime/STTN-论文笔记/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JonassenLi">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/cat.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JonassenLi">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                STTN-论文笔记
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-09-15T18:28:09+08:00">
+                2018-09-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">in</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/论文笔记/" itemprop="url" rel="index">
+                    <span itemprop="name">论文笔记</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="论文笔记-STTN-ECCV-2018"><a href="#论文笔记-STTN-ECCV-2018" class="headerlink" title="论文笔记-STTN ECCV 2018"></a>论文笔记-STTN ECCV 2018</h1><h2 id="前要"><a href="#前要" class="headerlink" title="前要"></a>前要</h2><p>刚来sensetime的第一天，在工位上不知所措，下午挑了几篇单目深度估计的文章来看，然后…宇哥晚上跟我说来来来你把这篇文章看一看吧，然后就有了第一个任务。  </p>
+<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>这篇文章是ECCV2018的一篇文章 <a href="http://openaccess.thecvf.com/content_ECCV_2018/html/Tae_Hyun_Kim_Spatio-temporal_Transformer_Network_ECCV_2018_paper.html" target="_blank" rel="external">Spatio-Temporal Transformer Network for Video Restoration.</a><br>现在state of art的Video Restoration Method 通常使用了optical flow network来优化视频中帧与帧之间的短时的信息。然而这些方法大多数只关注相邻的一对帧之间的联系，从而忽略了视频中较长距离的帧之间的联系。这篇文章提出了一种网络结构（Spatio-Temporal Transformer Network）能够一次性处理多帧，从而解决了视频中的遮挡问题，也可以应用于视频超分辨率和视频去模糊等其它问题。</p>
+<h2 id="Main-Idea"><a href="#Main-Idea" class="headerlink" title="Main Idea"></a>Main Idea</h2><p>这篇文章的Inspiration来自于Google的一篇文章<a href="https://arxiv.org/abs/1506.02025" target="_blank" rel="external">Spatial Transformer Networks</a><br>STN网络的实质就是训练了一个Grid Generator 来对原图进行变化，或者说对原图重新Sample<br>见下图与对应公式，这样做的好处在于，弥补了神经网络对空间不变性的缺陷(spatial invariant),比如说对于下图的手写数字，重新采样后的图片一定程度上恢复了数字的旋转压缩，这让后面神经网络的准确率大大增加。</p>
+<p>STTN采用了STN的思想，把二维扩展到了三维。原STN是通过预测一个二维的grid generator来生成采样点，而STTN则是通过预测多帧之间的Flow(可以理解为光流？)来确定一个在多帧之间的采样点。<br>有关STN 可以参考这里：<a href="https://kevinzakka.github.io/2017/01/18/stn-part2/" target="_blank" rel="external">https://kevinzakka.github.io/2017/01/18/stn-part2/</a></p>
+<h2 id="Architect-Detail"><a href="#Architect-Detail" class="headerlink" title="Architect Detail"></a>Architect Detail</h2><p>STTN network 的网络结构如下图所示<br><img src="/images/sttn/architecture.png" alt="STTN 网络结构"></p>
+<h3 id="spatio-Temporal-Flow-Estimation-Network"><a href="#spatio-Temporal-Flow-Estimation-Network" class="headerlink" title="spatio-Temporal Flow Estimation Network"></a>spatio-Temporal Flow Estimation Network</h3><p>传统的预测光流的方法常用相邻两张图像比较，比较多次之后得到结果，一是计算耗时，二是不可靠。<br>STTN使用了一种<a href="https://arxiv.org/abs/1505.04597v1" target="_blank" rel="external">U-net</a>的网络结构，将所有帧stack到一起（H<em>W</em>C<em>T）作为网络的输入，输出(u,v,w)-&gt;(H</em>W*3)的光流<br>U-net的网络结构如下所示</p>
+<h3 id="Differentiable-Spatio-Temporal-Sampler"><a href="#Differentiable-Spatio-Temporal-Sampler" class="headerlink" title="Differentiable Spatio-Temporal Sampler"></a>Differentiable Spatio-Temporal Sampler</h3><p>这一块和STN中的Grid Generator相同，根据得到的Optical Flow对原图进行采样。公式如下<br><img src="/images/sttn/formu_1.png" alt=""><br>这个公式看着唬人，实际上比STN的思想还要暴力简单,展开之后<br><img src="/images/sttn/formu_2.png" alt=""><br>实际上想一想，就是把每一个点(x,y,t) 分别加上(u,v,w)的偏移量之后得到的新点，根据到其空间内最近四个点的距离加权求和</p>
+<h3 id="Image-Processing-part"><a href="#Image-Processing-part" class="headerlink" title="Image Processing part"></a>Image Processing part</h3><p>原图给了一个Video restoration的例子，使用的了Resblock*9? sttn结构这个东西好像可以配合各种网络用上，如下图所示。<br><img src="/images/sttn/architecture2.png" alt=""></p>
+<h2 id="补充"><a href="#补充" class="headerlink" title="补充"></a>补充</h2><p>这一篇文章目前好像还没有放出官方代码，数据集也不见踪影,更坑爹的是loss function和各种Test data给的十分不详细…然鹅宇哥让我实现一下(- ▽ -)”…<br>Tensorflow实现与分析见另一篇文章 <a href="../STTN-tf-Implementation/">传送门</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/deeplearning/" rel="tag"># deeplearning</a>
+          
+            <a href="/tags/computer-vision/" rel="tag"># computer vision</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/04/15/machinelearning/tensorflow_notes/style_transfer/" rel="next" title="Image Style Transfer based on CNN">
+                <i class="fa fa-chevron-left"></i> Image Style Transfer based on CNN
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/09/17/sensetime/STTN-tf-Implementation/" rel="prev" title="STTN tf Implementation">
+                STTN tf Implementation <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Inhaltsverzeichnis
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Übersicht
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/cat.jpg"
+               alt="JonassenLi" />
+          <p class="site-author-name" itemprop="name">JonassenLi</p>
+           
+              <p class="site-description motion-element" itemprop="description">salty fish jojo23333's personal page</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">32</span>
+                <span class="site-state-item-name">Artikel</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">Kategorien</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">33</span>
+                <span class="site-state-item-name">Tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/jojo23333" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#论文笔记-STTN-ECCV-2018"><span class="nav-number">1.</span> <span class="nav-text">论文笔记-STTN ECCV 2018</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#前要"><span class="nav-number">1.1.</span> <span class="nav-text">前要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#简介"><span class="nav-number">1.2.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Main-Idea"><span class="nav-number">1.3.</span> <span class="nav-text">Main Idea</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Architect-Detail"><span class="nav-number">1.4.</span> <span class="nav-text">Architect Detail</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#spatio-Temporal-Flow-Estimation-Network"><span class="nav-number">1.4.1.</span> <span class="nav-text">spatio-Temporal Flow Estimation Network</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Differentiable-Spatio-Temporal-Sampler"><span class="nav-number">1.4.2.</span> <span class="nav-text">Differentiable Spatio-Temporal Sampler</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Image-Processing-part"><span class="nav-number">1.4.3.</span> <span class="nav-text">Image Processing part</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#补充"><span class="nav-number">1.5.</span> <span class="nav-text">补充</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JonassenLi</span>
+</div>
+
+
+<div class="powered-by">
+  Erstellt mit  <a class="theme-link" href="https://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+  
+
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

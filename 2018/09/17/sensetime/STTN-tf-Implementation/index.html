@@ -1,0 +1,774 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="tensorflow,deeplearning,computer vision," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="STTN tensorflow 实现前要这篇文章是论文 Spatio-Temporal Transformer Network for Video Restoration.的实现，之前有写过这篇论文的解析 传送门第一次尝试用tensorflow复现论文..（；´д｀）ゞ而且还是从头写，虽然之前也片片段段的写过一点，不过从头写感觉就是不一样啊,这里先贴一点我用到的资料吧。  
+
+我发现tensorf">
+<meta property="og:type" content="article">
+<meta property="og:title" content="STTN tf Implementation">
+<meta property="og:url" content="http://yoursite.com/2018/09/17/sensetime/STTN-tf-Implementation/index.html">
+<meta property="og:site_name" content="JonassenLi">
+<meta property="og:description" content="STTN tensorflow 实现前要这篇文章是论文 Spatio-Temporal Transformer Network for Video Restoration.的实现，之前有写过这篇论文的解析 传送门第一次尝试用tensorflow复现论文..（；´д｀）ゞ而且还是从头写，虽然之前也片片段段的写过一点，不过从头写感觉就是不一样啊,这里先贴一点我用到的资料吧。  
+
+我发现tensorf">
+<meta property="og:image" content="http://yoursite.com/images/sttn/unet.png">
+<meta property="og:image" content="http://yoursite.com/images/sttn/res9.png">
+<meta property="og:image" content="http://yoursite.com/images/sttn/architecture2.png">
+<meta property="og:image" content="http://yoursite.com/images/sttn/result_analyze1.png">
+<meta property="og:image" content="http://yoursite.com/images/sttn/total_mse.png">
+<meta property="og:image" content="http://yoursite.com/images/sttn/test_mse.png">
+<meta property="og:updated_time" content="2018-09-18T09:11:00.490Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="STTN tf Implementation">
+<meta name="twitter:description" content="STTN tensorflow 实现前要这篇文章是论文 Spatio-Temporal Transformer Network for Video Restoration.的实现，之前有写过这篇论文的解析 传送门第一次尝试用tensorflow复现论文..（；´д｀）ゞ而且还是从头写，虽然之前也片片段段的写过一点，不过从头写感觉就是不一样啊,这里先贴一点我用到的资料吧。  
+
+我发现tensorf">
+<meta name="twitter:image" content="http://yoursite.com/images/sttn/unet.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/09/17/sensetime/STTN-tf-Implementation/"/>
+
+
+
+
+
+  <title> STTN tf Implementation | JonassenLi </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">JonassenLi</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">LMC's Notebook</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Startseite
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Kategorien
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archiv
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/09/17/sensetime/STTN-tf-Implementation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JonassenLi">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/cat.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JonassenLi">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                STTN tf Implementation
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-09-17T17:03:36+08:00">
+                2018-09-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="STTN-tensorflow-实现"><a href="#STTN-tensorflow-实现" class="headerlink" title="STTN tensorflow 实现"></a>STTN tensorflow 实现</h1><h2 id="前要"><a href="#前要" class="headerlink" title="前要"></a>前要</h2><p>这篇文章是论文 <a href="http://openaccess.thecvf.com/content_ECCV_2018/html/Tae_Hyun_Kim_Spatio-temporal_Transformer_Network_ECCV_2018_paper.html" target="_blank" rel="external">Spatio-Temporal Transformer Network for Video Restoration.</a>的实现，之前有写过这篇论文的解析 <a href="../STTN-论文笔记">传送门</a><br>第一次尝试用tensorflow复现论文..（；´д｀）ゞ而且还是从头写，虽然之前也片片段段的写过一点，不过从头写感觉就是不一样啊,这里先贴一点我用到的资料吧。  </p>
+<ul>
+<li>我发现tensorflow所有文档里面除了api以外..<a href="https://tensorflow.google.cn/programmers_guide/" target="_blank" rel="external">guide</a>最好用..</li>
+<li>STN –&gt; STNN STN Offical Repo: <a href="https://github.com/kevinzakka/spatial-transformer-network" target="_blank" rel="external">https://github.com/kevinzakka/spatial-transformer-network</a></li>
+<li>尝试理解一个构造模式也不错，由于原论文refer到了我参考了VDSR 的 tensorflow-repo: <a href="https://github.com/Jongchan/tensorflow-vdsr" target="_blank" rel="external">https://github.com/Jongchan/tensorflow-vdsr</a></li>
+</ul>
+<h2 id="network-architecture"><a href="#network-architecture" class="headerlink" title="network architecture"></a>network architecture</h2><p>虽然network architecture在之前一篇文章里面也有提到过，这里就提一些细节吧，整体的网络结构和</p>
+<ul>
+<li>U—net 包括下采样层和上采样层两个部分，与U-net论文里提到的U-net不同，这里的U-net下采样通过stride=2的卷积层来做到，而不是池化层。而上采样使用的是双线性插值。（这里面的两点区别有待仔细考虑，例如用反卷积会怎么样？）</li>
+<li>Spatio-Temporal Sampler 实现类似于STN（其实觉得这种能自动算gradient很神奇，有时间仔细观察一下tensorboard理解一下这里咋back propoagate）</li>
+<li>Image proccesing part 我就简单的使用了他video restoration network 里面的resnet-9</li>
+</ul>
+<p>tensorboard 可视化之后结果大概这样：  </p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">unet部分</th>
+<th style="text-align:left">res9部分</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><img src="/images/sttn/unet.png" alt=""></td>
+<td style="text-align:left"><img src="/images/sttn/res9.png" alt=""></td>
+</tr>
+</tbody>
+</table>
+<h2 id="有关数据集"><a href="#有关数据集" class="headerlink" title="有关数据集"></a>有关数据集</h2><h3 id="Self-made-VideoScenes-数据集"><a href="#Self-made-VideoScenes-数据集" class="headerlink" title="Self-made VideoScenes 数据集"></a>Self-made VideoScenes 数据集</h3><p>这个论文既不公开代码也不公开数据集=。=。我参考了这篇论文refer的一些论文用的数据集，发现很多都是通过下载网站上的HD Video来搞的。然后同样是参考了这篇论文refer的论文的一些数据。发现它download的一些数据集大多是一些运动类的高清数据集。于是我也采用了类似的数据集（不过video还是自己手动一个一个去download的）。<br>下好20多个时长在5~10分钟不等的video后，我发现一个严重的问题，那就是这些视频大多数由多个连续镜头剪辑在一起形成。而且有的还有片头片尾，我必须要考虑如下的一些事情：</p>
+<ol>
+<li><p><strong>场景分割</strong>。 不能简单地把视频转化为帧，必须要考虑场景和场景之间在哪切分，不然训练到场景切换之间地数据就有问题<br>幸运的是，python有一个scenedetect的工具来处理这个问题，具体涉及到一些阈值的处理方式啥的可以参考<a href="https://pyscenedetect.readthedocs.io/en/latest/" target="_blank" rel="external">文档</a></p>
+</li>
+<li><p><strong>分割间隔</strong>。 视频取帧怎么设置间隔？<br>我觉得这是个很难说的问题，因为有缓慢地视角移动也有快速的视角移动，但是按理来说，STTN的optical flow estimation Network应该是要能学到光流中包含的这些信息的，暂时来说我是取了0.1s为间隔</p>
+</li>
+<li><p><strong>数据清洗</strong><br>有一些渐暗的视频切换效果比较难鉴别到，也有一些制作人表之类的Scene需要自己去掉</p>
+</li>
+<li><p><strong>数据加噪</strong><br>宇哥跟我建议先加高斯噪声试试..我就先每个frame resize之后加的高斯噪声..我觉得之后需要加上blur和down sample弄复杂一点..</p>
+</li>
+</ol>
+<p>意思意思贴一点数据处理的代码，估计以后还用的上PySceneDetect这个工具<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">split_video_by_scene</span><span class="params">(video)</span>:</span></div><div class="line">    video_name = video.split(<span class="string">'.'</span>)[<span class="number">-2</span>].split(<span class="string">'/'</span>)[<span class="number">-1</span>]</div><div class="line">    os.system(<span class="string">"scenedetect --input \""</span> + video +  <span class="string">"\" list-scenes detect-content -t 25"</span>)</div><div class="line"></div><div class="line">    scene = pd.read_csv(video_name + <span class="string">"-Scenes.csv"</span>, skiprows=<span class="number">1</span>)</div><div class="line">    scene_begin = list(scene[<span class="string">"Start Time (seconds)"</span>])</div><div class="line">    scene_end = list(scene[<span class="string">"End Time (seconds)"</span>])</div><div class="line">    end_frame = scene_end[<span class="number">-1</span>]</div><div class="line">    save_scene_images(video, scene_begin, scene_end, end_frame)</div></pre></td></tr></table></figure></p>
+<h3 id="GoPR-数据集"><a href="#GoPR-数据集" class="headerlink" title="GoPR 数据集"></a>GoPR 数据集</h3><p>这个数据集是CVPR2017的一篇论文用到的数据集，具体戳 <a href="https://github.com/SeungjunNah/DeepDeblur_release" target="_blank" rel="external">https://github.com/SeungjunNah/DeepDeblur_release</a><br>大概有2k张连续帧，1k多张测试用，其实很小了..<br>更大的数据集估计能有1w张清晰图，之后参考那个</p>
+<h2 id="实现当中踩过的一些坑和问题"><a href="#实现当中踩过的一些坑和问题" class="headerlink" title="实现当中踩过的一些坑和问题"></a>实现当中踩过的一些坑和问题</h2><p>### </p>
+<h2 id="Train过程中遇到的问题汇总"><a href="#Train过程中遇到的问题汇总" class="headerlink" title="Train过程中遇到的问题汇总"></a>Train过程中遇到的问题汇总</h2><ol>
+<li>一开始Train不起来 :(<br>可能太年轻，一个1280<em> 720 </em> 3 的tensor,其对应的一个conv2d没想到竟然会占到450M的显存，分分钟爆掉11G的1080Ti….,batch_size=1才勉强能跑。无奈只好downsize输入，1280 <em> 720 -&gt; 640 </em> 360。<br>为了保证训练的数据集像素不变，每次训练随机地crop 640*360大小的图片出来然后feed进去。由于数据集本身不是很大，这种方法应该也从某种意义上扩大了数据集？（在原数据集上random crop）</li>
+<li>能训练了之后，针对自己的数据集训练的第一版效果不是很好，很多有噪声的地方被模糊化了，估计是optical flow network没有训练好。用tensorboard加上了一些输出信息，观察到正则loss占了很大部分比重，减小正则项，同时使用decayrate 来减少有时候出现的diverge现象。以上均属于hyperparameter finetuning 过程。</li>
+<li>用并行输入优化，尝试加快训练过程。由于现在仍是在单卡上训练，后续考虑tensorflow的多卡数据并行训练。</li>
+<li>怀疑之前的问题很大程度是光流网络输出的问题。尝试visualize光流网络的训练结果。同时考虑替换后续image processing network为densenet。</li>
+<li>有关loss, 论文里没明确给loss的表达式子，现在是joint train两个loss ,xt~ yt~相对于ground_truth的loss ,xt~ yt~如下图<br><img src="/images/sttn/architecture2.png" alt=""></li>
+</ol>
+<h2 id="训练结果记录"><a href="#训练结果记录" class="headerlink" title="训练结果记录"></a>训练结果记录</h2><h3 id="GoPR数据集第一批的训练结果"><a href="#GoPR数据集第一批的训练结果" class="headerlink" title="GoPR数据集第一批的训练结果"></a>GoPR数据集第一批的训练结果</h3><p>psnr基本在25上下，下面是一个结果截图<br><img src="/images/sttn/result_analyze1.png" alt="一个效果一般的结果"></p>
+<ol>
+<li>效果一般，但是可以看到网络似乎是学到了通过预测光流用其它帧来补偿模糊(人脚那一块的模糊)</li>
+<li>考虑改善后处理网络</li>
+<li>我plot了一下total loss 和每训练一个epoch得到的test loss如下图所示  </li>
+</ol>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">train_mse</th>
+<th style="text-align:left">test_mse</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><img src="/images/sttn/total_mse.png" alt=""></td>
+<td style="text-align:left"><img src="/images/sttn/test_mse.png" alt=""></td>
+</tr>
+</tbody>
+</table>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/tensorflow/" rel="tag"># tensorflow</a>
+          
+            <a href="/tags/deeplearning/" rel="tag"># deeplearning</a>
+          
+            <a href="/tags/computer-vision/" rel="tag"># computer vision</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/09/15/sensetime/STTN-论文笔记/" rel="next" title="STTN-论文笔记">
+                <i class="fa fa-chevron-left"></i> STTN-论文笔记
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Inhaltsverzeichnis
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Übersicht
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/cat.jpg"
+               alt="JonassenLi" />
+          <p class="site-author-name" itemprop="name">JonassenLi</p>
+           
+              <p class="site-description motion-element" itemprop="description">salty fish jojo23333's personal page</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">32</span>
+                <span class="site-state-item-name">Artikel</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">Kategorien</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">33</span>
+                <span class="site-state-item-name">Tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/jojo23333" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#STTN-tensorflow-实现"><span class="nav-number">1.</span> <span class="nav-text">STTN tensorflow 实现</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#前要"><span class="nav-number">1.1.</span> <span class="nav-text">前要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#network-architecture"><span class="nav-number">1.2.</span> <span class="nav-text">network architecture</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#有关数据集"><span class="nav-number">1.3.</span> <span class="nav-text">有关数据集</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Self-made-VideoScenes-数据集"><span class="nav-number">1.3.1.</span> <span class="nav-text">Self-made VideoScenes 数据集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GoPR-数据集"><span class="nav-number">1.3.2.</span> <span class="nav-text">GoPR 数据集</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现当中踩过的一些坑和问题"><span class="nav-number">1.4.</span> <span class="nav-text">实现当中踩过的一些坑和问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Train过程中遇到的问题汇总"><span class="nav-number">1.5.</span> <span class="nav-text">Train过程中遇到的问题汇总</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#训练结果记录"><span class="nav-number">1.6.</span> <span class="nav-text">训练结果记录</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#GoPR数据集第一批的训练结果"><span class="nav-number">1.6.1.</span> <span class="nav-text">GoPR数据集第一批的训练结果</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">JonassenLi</span>
+</div>
+
+
+<div class="powered-by">
+  Erstellt mit  <a class="theme-link" href="https://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+  
+
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

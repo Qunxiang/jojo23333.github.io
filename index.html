@@ -172,7 +172,7 @@
       </a>
     </div>
       
-        <p class="site-subtitle"></p>
+        <p class="site-subtitle">LMC's Notebook</p>
       
   </div>
 
@@ -260,10 +260,343 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/09/17/sensetime/STTN-tf-Implementation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JonassenLi">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/cat.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JonassenLi">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/09/17/sensetime/STTN-tf-Implementation/" itemprop="url">
+                  STTN tf Implementation
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-09-17T17:03:36+08:00">
+                2018-09-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="STTN-tensorflow-实现"><a href="#STTN-tensorflow-实现" class="headerlink" title="STTN tensorflow 实现"></a>STTN tensorflow 实现</h1><h2 id="前要"><a href="#前要" class="headerlink" title="前要"></a>前要</h2><p>这篇文章是论文 <a href="http://openaccess.thecvf.com/content_ECCV_2018/html/Tae_Hyun_Kim_Spatio-temporal_Transformer_Network_ECCV_2018_paper.html" target="_blank" rel="external">Spatio-Temporal Transformer Network for Video Restoration.</a>的实现，之前有写过这篇论文的解析 <a href="../STTN-论文笔记">传送门</a><br>第一次尝试用tensorflow复现论文..（；´д｀）ゞ而且还是从头写，虽然之前也片片段段的写过一点，不过从头写感觉就是不一样啊,这里先贴一点我用到的资料吧。  </p>
+<ul>
+<li>我发现tensorflow所有文档里面除了api以外..<a href="https://tensorflow.google.cn/programmers_guide/" target="_blank" rel="external">guide</a>最好用..</li>
+<li>STN –&gt; STNN STN Offical Repo: <a href="https://github.com/kevinzakka/spatial-transformer-network" target="_blank" rel="external">https://github.com/kevinzakka/spatial-transformer-network</a></li>
+<li>尝试理解一个构造模式也不错，由于原论文refer到了我参考了VDSR 的 tensorflow-repo: <a href="https://github.com/Jongchan/tensorflow-vdsr" target="_blank" rel="external">https://github.com/Jongchan/tensorflow-vdsr</a></li>
+</ul>
+<h2 id="network-architecture"><a href="#network-architecture" class="headerlink" title="network architecture"></a>network architecture</h2><p>虽然network architecture在之前一篇文章里面也有提到过，这里就提一些细节吧，整体的网络结构和</p>
+<ul>
+<li>U—net 包括下采样层和上采样层两个部分，与U-net论文里提到的U-net不同，这里的U-net下采样通过stride=2的卷积层来做到，而不是池化层。而上采样使用的是双线性插值。（这里面的两点区别有待仔细考虑，例如用反卷积会怎么样？）</li>
+<li>Spatio-Temporal Sampler 实现类似于STN（其实觉得这种能自动算gradient很神奇，有时间仔细观察一下tensorboard理解一下这里咋back propoagate）</li>
+<li>Image proccesing part 我就简单的使用了他video restoration network 里面的resnet-9</li>
+</ul>
+<p>tensorboard 可视化之后结果大概这样：  </p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">unet部分</th>
+<th style="text-align:left">res9部分</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><img src="/images/sttn/unet.png" alt=""></td>
+<td style="text-align:left"><img src="/images/sttn/res9.png" alt=""></td>
+</tr>
+</tbody>
+</table>
+<h2 id="有关数据集"><a href="#有关数据集" class="headerlink" title="有关数据集"></a>有关数据集</h2><h3 id="Self-made-VideoScenes-数据集"><a href="#Self-made-VideoScenes-数据集" class="headerlink" title="Self-made VideoScenes 数据集"></a>Self-made VideoScenes 数据集</h3><p>这个论文既不公开代码也不公开数据集=。=。我参考了这篇论文refer的一些论文用的数据集，发现很多都是通过下载网站上的HD Video来搞的。然后同样是参考了这篇论文refer的论文的一些数据。发现它download的一些数据集大多是一些运动类的高清数据集。于是我也采用了类似的数据集（不过video还是自己手动一个一个去download的）。<br>下好20多个时长在5~10分钟不等的video后，我发现一个严重的问题，那就是这些视频大多数由多个连续镜头剪辑在一起形成。而且有的还有片头片尾，我必须要考虑如下的一些事情：</p>
+<ol>
+<li><p><strong>场景分割</strong>。 不能简单地把视频转化为帧，必须要考虑场景和场景之间在哪切分，不然训练到场景切换之间地数据就有问题<br>幸运的是，python有一个scenedetect的工具来处理这个问题，具体涉及到一些阈值的处理方式啥的可以参考<a href="https://pyscenedetect.readthedocs.io/en/latest/" target="_blank" rel="external">文档</a></p>
+</li>
+<li><p><strong>分割间隔</strong>。 视频取帧怎么设置间隔？<br>我觉得这是个很难说的问题，因为有缓慢地视角移动也有快速的视角移动，但是按理来说，STTN的optical flow estimation Network应该是要能学到光流中包含的这些信息的，暂时来说我是取了0.1s为间隔</p>
+</li>
+<li><p><strong>数据清洗</strong><br>有一些渐暗的视频切换效果比较难鉴别到，也有一些制作人表之类的Scene需要自己去掉</p>
+</li>
+<li><p><strong>数据加噪</strong><br>宇哥跟我建议先加高斯噪声试试..我就先每个frame resize之后加的高斯噪声..我觉得之后需要加上blur和down sample弄复杂一点..</p>
+</li>
+</ol>
+<p>意思意思贴一点数据处理的代码，估计以后还用的上PySceneDetect这个工具<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">split_video_by_scene</span><span class="params">(video)</span>:</span></div><div class="line">    video_name = video.split(<span class="string">'.'</span>)[<span class="number">-2</span>].split(<span class="string">'/'</span>)[<span class="number">-1</span>]</div><div class="line">    os.system(<span class="string">"scenedetect --input \""</span> + video +  <span class="string">"\" list-scenes detect-content -t 25"</span>)</div><div class="line"></div><div class="line">    scene = pd.read_csv(video_name + <span class="string">"-Scenes.csv"</span>, skiprows=<span class="number">1</span>)</div><div class="line">    scene_begin = list(scene[<span class="string">"Start Time (seconds)"</span>])</div><div class="line">    scene_end = list(scene[<span class="string">"End Time (seconds)"</span>])</div><div class="line">    end_frame = scene_end[<span class="number">-1</span>]</div><div class="line">    save_scene_images(video, scene_begin, scene_end, end_frame)</div></pre></td></tr></table></figure></p>
+<h3 id="GoPR-数据集"><a href="#GoPR-数据集" class="headerlink" title="GoPR 数据集"></a>GoPR 数据集</h3><p>这个数据集是CVPR2017的一篇论文用到的数据集，具体戳 <a href="https://github.com/SeungjunNah/DeepDeblur_release" target="_blank" rel="external">https://github.com/SeungjunNah/DeepDeblur_release</a><br>大概有2k张连续帧，1k多张测试用，其实很小了..<br>更大的数据集估计能有1w张清晰图，之后参考那个</p>
+<h2 id="实现当中踩过的一些坑和问题"><a href="#实现当中踩过的一些坑和问题" class="headerlink" title="实现当中踩过的一些坑和问题"></a>实现当中踩过的一些坑和问题</h2><p>### </p>
+<h2 id="Train过程中遇到的问题汇总"><a href="#Train过程中遇到的问题汇总" class="headerlink" title="Train过程中遇到的问题汇总"></a>Train过程中遇到的问题汇总</h2><ol>
+<li>一开始Train不起来 :(<br>可能太年轻，一个1280<em> 720 </em> 3 的tensor,其对应的一个conv2d没想到竟然会占到450M的显存，分分钟爆掉11G的1080Ti….,batch_size=1才勉强能跑。无奈只好downsize输入，1280 <em> 720 -&gt; 640 </em> 360。<br>为了保证训练的数据集像素不变，每次训练随机地crop 640*360大小的图片出来然后feed进去。由于数据集本身不是很大，这种方法应该也从某种意义上扩大了数据集？（在原数据集上random crop）</li>
+<li>能训练了之后，针对自己的数据集训练的第一版效果不是很好，很多有噪声的地方被模糊化了，估计是optical flow network没有训练好。用tensorboard加上了一些输出信息，观察到正则loss占了很大部分比重，减小正则项，同时使用decayrate 来减少有时候出现的diverge现象。以上均属于hyperparameter finetuning 过程。</li>
+<li>用并行输入优化，尝试加快训练过程。由于现在仍是在单卡上训练，后续考虑tensorflow的多卡数据并行训练。</li>
+<li>怀疑之前的问题很大程度是光流网络输出的问题。尝试visualize光流网络的训练结果。同时考虑替换后续image processing network为densenet。</li>
+<li>有关loss, 论文里没明确给loss的表达式子，现在是joint train两个loss ,xt~ yt~相对于ground_truth的loss ,xt~ yt~如下图<br><img src="/images/sttn/architecture2.png" alt=""></li>
+</ol>
+<h2 id="训练结果记录"><a href="#训练结果记录" class="headerlink" title="训练结果记录"></a>训练结果记录</h2><h3 id="GoPR数据集第一批的训练结果"><a href="#GoPR数据集第一批的训练结果" class="headerlink" title="GoPR数据集第一批的训练结果"></a>GoPR数据集第一批的训练结果</h3><p>psnr基本在25上下，下面是一个结果截图<br><img src="/images/sttn/result_analyze1.png" alt="一个效果一般的结果"></p>
+<ol>
+<li>效果一般，但是可以看到网络似乎是学到了通过预测光流用其它帧来补偿模糊(人脚那一块的模糊)</li>
+<li>考虑改善后处理网络</li>
+<li>我plot了一下total loss 和每训练一个epoch得到的test loss如下图所示  </li>
+</ol>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">train_mse</th>
+<th style="text-align:left">test_mse</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><img src="/images/sttn/total_mse.png" alt=""></td>
+<td style="text-align:left"><img src="/images/sttn/test_mse.png" alt=""></td>
+</tr>
+</tbody>
+</table>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/09/15/sensetime/STTN-论文笔记/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="JonassenLi">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/cat.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JonassenLi">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/09/15/sensetime/STTN-论文笔记/" itemprop="url">
+                  STTN-论文笔记
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-09-15T18:28:09+08:00">
+                2018-09-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">in</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/论文笔记/" itemprop="url" rel="index">
+                    <span itemprop="name">论文笔记</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="论文笔记-STTN-ECCV-2018"><a href="#论文笔记-STTN-ECCV-2018" class="headerlink" title="论文笔记-STTN ECCV 2018"></a>论文笔记-STTN ECCV 2018</h1><h2 id="前要"><a href="#前要" class="headerlink" title="前要"></a>前要</h2><p>刚来sensetime的第一天，在工位上不知所措，下午挑了几篇单目深度估计的文章来看，然后…宇哥晚上跟我说来来来你把这篇文章看一看吧，然后就有了第一个任务。  </p>
+<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>这篇文章是ECCV2018的一篇文章 <a href="http://openaccess.thecvf.com/content_ECCV_2018/html/Tae_Hyun_Kim_Spatio-temporal_Transformer_Network_ECCV_2018_paper.html" target="_blank" rel="external">Spatio-Temporal Transformer Network for Video Restoration.</a><br>现在state of art的Video Restoration Method 通常使用了optical flow network来优化视频中帧与帧之间的短时的信息。然而这些方法大多数只关注相邻的一对帧之间的联系，从而忽略了视频中较长距离的帧之间的联系。这篇文章提出了一种网络结构（Spatio-Temporal Transformer Network）能够一次性处理多帧，从而解决了视频中的遮挡问题，也可以应用于视频超分辨率和视频去模糊等其它问题。</p>
+<h2 id="Main-Idea"><a href="#Main-Idea" class="headerlink" title="Main Idea"></a>Main Idea</h2><p>这篇文章的Inspiration来自于Google的一篇文章<a href="https://arxiv.org/abs/1506.02025" target="_blank" rel="external">Spatial Transformer Networks</a><br>STN网络的实质就是训练了一个Grid Generator 来对原图进行变化，或者说对原图重新Sample<br>见下图与对应公式，这样做的好处在于，弥补了神经网络对空间不变性的缺陷(spatial invariant),比如说对于下图的手写数字，重新采样后的图片一定程度上恢复了数字的旋转压缩，这让后面神经网络的准确率大大增加。</p>
+<p>STTN采用了STN的思想，把二维扩展到了三维。原STN是通过预测一个二维的grid generator来生成采样点，而STTN则是通过预测多帧之间的Flow(可以理解为光流？)来确定一个在多帧之间的采样点。<br>有关STN 可以参考这里：<a href="https://kevinzakka.github.io/2017/01/18/stn-part2/" target="_blank" rel="external">https://kevinzakka.github.io/2017/01/18/stn-part2/</a></p>
+<h2 id="Architect-Detail"><a href="#Architect-Detail" class="headerlink" title="Architect Detail"></a>Architect Detail</h2><p>STTN network 的网络结构如下图所示<br><img src="/images/sttn/architecture.png" alt="STTN 网络结构"></p>
+<h3 id="spatio-Temporal-Flow-Estimation-Network"><a href="#spatio-Temporal-Flow-Estimation-Network" class="headerlink" title="spatio-Temporal Flow Estimation Network"></a>spatio-Temporal Flow Estimation Network</h3><p>传统的预测光流的方法常用相邻两张图像比较，比较多次之后得到结果，一是计算耗时，二是不可靠。<br>STTN使用了一种<a href="https://arxiv.org/abs/1505.04597v1" target="_blank" rel="external">U-net</a>的网络结构，将所有帧stack到一起（H<em>W</em>C<em>T）作为网络的输入，输出(u,v,w)-&gt;(H</em>W*3)的光流<br>U-net的网络结构如下所示</p>
+<h3 id="Differentiable-Spatio-Temporal-Sampler"><a href="#Differentiable-Spatio-Temporal-Sampler" class="headerlink" title="Differentiable Spatio-Temporal Sampler"></a>Differentiable Spatio-Temporal Sampler</h3><p>这一块和STN中的Grid Generator相同，根据得到的Optical Flow对原图进行采样。公式如下<br><img src="/images/sttn/formu_1.png" alt=""><br>这个公式看着唬人，实际上比STN的思想还要暴力简单,展开之后<br><img src="/images/sttn/formu_2.png" alt=""><br>实际上想一想，就是把每一个点(x,y,t) 分别加上(u,v,w)的偏移量之后得到的新点，根据到其空间内最近四个点的距离加权求和</p>
+<h3 id="Image-Processing-part"><a href="#Image-Processing-part" class="headerlink" title="Image Processing part"></a>Image Processing part</h3><p>原图给了一个Video restoration的例子，使用的了Resblock*9? sttn结构这个东西好像可以配合各种网络用上，如下图所示。<br><img src="/images/sttn/architecture2.png" alt=""></p>
+<h2 id="补充"><a href="#补充" class="headerlink" title="补充"></a>补充</h2><p>这一篇文章目前好像还没有放出官方代码，数据集也不见踪影,更坑爹的是loss function和各种Test data给的十分不详细…然鹅宇哥让我实现一下(- ▽ -)”…<br>Tensorflow实现与分析见另一篇文章 <a href="../STTN-tf-Implementation/">传送门</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/15/machinelearning/tensorflow_notes/style_transfer/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
+      <meta itemprop="name" content="JonassenLi">
       <meta itemprop="description" content="">
       <meta itemprop="image" content="/images/cat.jpg">
     </span>
@@ -348,7 +681,7 @@
 <p>VGGNet. The runner-up in ILSVRC 2014 was the network from Karen Simonyan and Andrew Zisserman that became known as the VGGNet. Its main contribution was in showing that the depth of the network is a critical component for good performance. Their final best network contains 16 CONV/FC layers and, appealingly, <strong>features an extremely homogeneous architecture that only performs 3x3 convolutions and 2x2 pooling from the beginning to the end.</strong> Their pretrained model is available for plug and play use in Caffe. A downside of the VGGNet is that it is more expensive to evaluate and uses a lot more memory and parameters (140M). Most of these parameters are in the first fully connected layer, and it was since found that these FC layers can be removed with no performance downgrade, significantly reducing the number of necessary parameters.</p>
 </blockquote>
 <p>VGGnet的网络参数如图所示  </p>
-<p><img src="./images/tf/VGGNet.png" alt="VGGNet achitecture"></p>
+<p><img src="/images/tf/VGGNet.png" alt="VGGNet achitecture"></p>
 <h3 id="基于VGGnet-的实现"><a href="#基于VGGnet-的实现" class="headerlink" title="基于VGGnet 的实现"></a>基于VGGnet 的实现</h3><p>文章使用了VGGNet当中的16层卷积层和5层pooling层,去掉了全连接层，并使用average pooling策略替换max pooling策略</p>
 <h4 id="lose-function"><a href="#lose-function" class="headerlink" title="lose function"></a>lose function</h4><p>关于怎么定义loss function,想法比较自然<br>在图像内容附近通过白噪声初始化一个输出的结果，然后通过网络对这个结果进行风格和内容两方面的约束进行修正。<br><strong>content loss</strong><br>设置一个白点噪声的初始图像和原图像输入网络，在某一层的输出$l$处,F和P分别为其特征表述，则取其方差为content loss</p>
 <p>$$ L_{content}(\vec p,\vec x, l) = \frac{1}{2}\sum_{i,j}(F_{ij}^{l}-P_{ij}^{l})^2 $$</p>
@@ -435,7 +768,7 @@
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/12/machinelearning/tensorflow_notes/note_CNN/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
+      <meta itemprop="name" content="JonassenLi">
       <meta itemprop="description" content="">
       <meta itemprop="image" content="/images/cat.jpg">
     </span>
@@ -585,7 +918,7 @@
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/11/machinelearning/tensorflow_notes/note3/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
+      <meta itemprop="name" content="JonassenLi">
       <meta itemprop="description" content="">
       <meta itemprop="image" content="/images/cat.jpg">
     </span>
@@ -731,7 +1064,7 @@
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/31/machinelearning/tensorflow_notes/tf_minist/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
+      <meta itemprop="name" content="JonassenLi">
       <meta itemprop="description" content="">
       <meta itemprop="image" content="/images/cat.jpg">
     </span>
@@ -854,7 +1187,7 @@
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/30/machinelearning/tensorflow_notes/note2/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
+      <meta itemprop="name" content="JonassenLi">
       <meta itemprop="description" content="">
       <meta itemprop="image" content="/images/cat.jpg">
     </span>
@@ -1015,7 +1348,7 @@
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/26/machinelearning/tensorflow_notes/note1/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
+      <meta itemprop="name" content="JonassenLi">
       <meta itemprop="description" content="">
       <meta itemprop="image" content="/images/cat.jpg">
     </span>
@@ -1161,10 +1494,10 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/22/开关反转问题/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/22/acm/开关反转问题/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
+      <meta itemprop="name" content="JonassenLi">
       <meta itemprop="description" content="">
       <meta itemprop="image" content="/images/cat.jpg">
     </span>
@@ -1183,7 +1516,7 @@
             
               
                 
-                <a class="post-title-link" href="/2017/09/22/开关反转问题/" itemprop="url">
+                <a class="post-title-link" href="/2017/09/22/acm/开关反转问题/" itemprop="url">
                   开关反转问题
                 </a>
               
@@ -1278,10 +1611,10 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/21/高斯消元求解带模方程组/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/21/acm/高斯消元求解带模方程组/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
+      <meta itemprop="name" content="JonassenLi">
       <meta itemprop="description" content="">
       <meta itemprop="image" content="/images/cat.jpg">
     </span>
@@ -1300,7 +1633,7 @@
             
               
                 
-                <a class="post-title-link" href="/2017/09/21/高斯消元求解带模方程组/" itemprop="url">
+                <a class="post-title-link" href="/2017/09/21/acm/高斯消元求解带模方程组/" itemprop="url">
                   高斯消元求解带模方程组
                 </a>
               
@@ -1410,294 +1743,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/18/求最小割最少边数/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/cat.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="JonassenLi">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/09/18/求最小割最少边数/" itemprop="url">
-                  求最小割最少边数
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Veröffentlicht am</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-09-18T22:01:39+08:00">
-                2017-09-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">in</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/acm/" itemprop="url" rel="index">
-                    <span itemprop="name">ACM</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>给有向图，求一个最小割，它的边数也最小<br>搜了原题题解，发现一堆假算法==<br>假算法说什么将满流边置为1 其它边置为INF 感觉不科学<br>因为考虑有不同种最大流情况的图，不同的最大流情况会导致算出来的结果不一样。</p>
-<p>AC的解法是对于每条边的容量乘上一个大于边数的数+1,最后再模上这个数。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;cstdio&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;cstring&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;cmath&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;utility&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;queue&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> MAXN 5000</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> sc(x) scanf(<span class="meta-string">"%d"</span>,&amp;(x))</span></div><div class="line"></div><div class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</div><div class="line"><span class="keyword">const</span> <span class="keyword">int</span> INF = <span class="number">0x3f3f3f3f</span>;</div><div class="line"></div><div class="line"><span class="keyword">struct</span> edge&#123;</div><div class="line">	<span class="keyword">int</span> t,cap,next;</div><div class="line">&#125;;</div><div class="line">edge e[MAXN];</div><div class="line"><span class="keyword">int</span> cnt;</div><div class="line"><span class="keyword">int</span> head[MAXN];</div><div class="line"><span class="keyword">int</span> n,m,s,t;</div><div class="line"><span class="keyword">int</span> iter[MAXN],level[MAXN];</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">add_edge</span><span class="params">(<span class="keyword">int</span> f,<span class="keyword">int</span> t,<span class="keyword">int</span> cap)</span></span>&#123;</div><div class="line">	e[cnt].t = t;	e[cnt].cap = cap;	e[cnt].next = head[f];</div><div class="line">	head[f] = cnt++;</div><div class="line">	e[cnt].t = f;	e[cnt].cap = <span class="number">0</span>;	e[cnt].next = head[t];</div><div class="line">	head[t] = cnt++;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">bfs</span><span class="params">(<span class="keyword">int</span> s,<span class="keyword">int</span> t)</span></span></div><div class="line">&#123;</div><div class="line">	<span class="built_in">memset</span>(level,<span class="number">-1</span>,<span class="keyword">sizeof</span>(level));</div><div class="line">	level[s] = <span class="number">0</span>;</div><div class="line">	<span class="built_in">queue</span>&lt;<span class="keyword">int</span>&gt; q;</div><div class="line">	q.push(s);</div><div class="line">	<span class="keyword">while</span>(!q.empty())&#123;</div><div class="line">		<span class="keyword">int</span> cur = q.front(); q.pop();</div><div class="line">		<span class="keyword">if</span>(cur==t) <span class="keyword">break</span>;</div><div class="line">		<span class="keyword">for</span>(<span class="keyword">int</span> i=head[cur]; i!=<span class="number">-1</span>; i=e[i].next)&#123;</div><div class="line">			<span class="keyword">int</span> v = e[i].t;</div><div class="line">			<span class="keyword">if</span>(level[v]&lt;<span class="number">0</span> &amp;&amp; e[i].cap&gt;<span class="number">0</span>)&#123;</div><div class="line">				level[v] = level[cur] + <span class="number">1</span>;</div><div class="line">				q.push(v);</div><div class="line">			&#125;	</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">dfs</span><span class="params">(<span class="keyword">int</span> u,<span class="keyword">int</span> t,<span class="keyword">int</span> flow)</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">if</span>(u==t) <span class="keyword">return</span> flow;</div><div class="line">	<span class="keyword">for</span>(<span class="keyword">int</span> &amp;i=iter[u]; i!=<span class="number">-1</span>; i=e[i].next)&#123;</div><div class="line">		<span class="keyword">int</span> v = e[i].t;</div><div class="line">		<span class="keyword">if</span>(level[v]&gt;level[u] &amp;&amp; e[i].cap&gt;<span class="number">0</span>)&#123;</div><div class="line">			<span class="keyword">int</span> val = dfs(v,t,min(flow,e[i].cap));</div><div class="line">			<span class="keyword">if</span>(val&gt;<span class="number">0</span>)&#123;</div><div class="line">				e[i].cap -= val;</div><div class="line">				e[i^<span class="number">1</span>].cap +=val;</div><div class="line">				<span class="keyword">return</span> val;</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">Dinic</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> ans = <span class="number">0</span>;</div><div class="line">	<span class="keyword">while</span>(<span class="number">1</span>)&#123;</div><div class="line">		bfs(s,t);</div><div class="line">	<span class="comment">//	for(int i=1; i&lt;=n; i++)</span></div><div class="line">	<span class="comment">//		cout&lt;&lt;"level "&lt;&lt;i&lt;&lt;": "&lt;&lt;level[i]&lt;&lt;endl;</span></div><div class="line">		<span class="keyword">if</span>(level[t]&lt;<span class="number">0</span>) <span class="keyword">break</span>;</div><div class="line">		<span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">1</span>; i&lt;=n; i++)</div><div class="line">			iter[i] = head[i];</div><div class="line">		<span class="keyword">int</span> val;</div><div class="line">		<span class="keyword">while</span>(val=dfs(s,t,INF))&#123;</div><div class="line">			<span class="comment">//cout&lt;&lt;"val: "&lt;&lt;val&lt;&lt;endl;</span></div><div class="line">			ans += val;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">return</span> ans;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> T;</div><div class="line">	sc(T);</div><div class="line">	<span class="keyword">while</span>(T--)&#123;</div><div class="line">		sc(n); sc(m);</div><div class="line">		sc(s); sc(t);</div><div class="line">		cnt = <span class="number">0</span>;</div><div class="line">		<span class="built_in">memset</span>(head,<span class="number">-1</span>,<span class="keyword">sizeof</span>(head));</div><div class="line">		<span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;m; i++)&#123;</div><div class="line">			<span class="keyword">int</span> u,v,w;</div><div class="line">			sc(u); sc(v); sc(w);</div><div class="line">			add_edge(u,v,w*<span class="number">1000</span>+<span class="number">1</span>);</div><div class="line">		&#125;</div><div class="line">		<span class="keyword">int</span> ans = Dinic();</div><div class="line">		<span class="built_in">cout</span>&lt;&lt;ans%<span class="number">1000</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/14/沈阳网络赛2017/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="muchenli">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/cat.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="JonassenLi">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/09/14/沈阳网络赛2017/" itemprop="url">
-                  沈阳网络赛2017
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Veröffentlicht am</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-09-14T16:11:20+08:00">
-                2017-09-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">in</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/acm/" itemprop="url" rel="index">
-                    <span itemprop="name">ACM</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>hdu 6199 dp<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line">ll dp[<span class="number">2</span>][<span class="number">350</span>][<span class="number">220</span>];</div><div class="line">ll sum[<span class="number">40020</span>];</div><div class="line">ll v[<span class="number">40020</span>];</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">int</span> t,n;</div><div class="line">    sc(t);</div><div class="line">    <span class="keyword">while</span>(t--)&#123;</div><div class="line">        sc(n);</div><div class="line">        sum[<span class="number">0</span>] = <span class="number">0</span>;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">1</span>; i&lt;=n; i++)&#123;</div><div class="line">            <span class="built_in">scanf</span>(<span class="string">"%lld"</span>,v+i);</div><div class="line">            sum[i] = sum[i<span class="number">-1</span>]+v[i];</div><div class="line">        &#125;</div><div class="line">        <span class="built_in">memset</span>(dp,<span class="number">0</span>,<span class="keyword">sizeof</span>(dp));</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=n; i&gt;=<span class="number">1</span>; i--)&#123;</div><div class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> j=<span class="number">1</span>; j*j&lt;=<span class="number">2</span>*i; j++)&#123;</div><div class="line">                <span class="keyword">if</span>(i+j==n+<span class="number">1</span>)&#123;</div><div class="line">                    dp[<span class="number">0</span>][i&amp;mod][j] = sum[n]-sum[i<span class="number">-1</span>];</div><div class="line">                    dp[<span class="number">1</span>][i&amp;mod][j] = sum[i<span class="number">-1</span>] - sum[n];</div><div class="line">                    <span class="keyword">break</span>;</div><div class="line">                &#125;</div><div class="line">                <span class="keyword">if</span>(i+j&gt;n+<span class="number">1</span>) <span class="keyword">continue</span>;</div><div class="line">                dp[<span class="number">0</span>][i&amp;mod][j] = max(dp[<span class="number">1</span>][(i+j)&amp;mod][j], dp[<span class="number">1</span>][(i+j+<span class="number">1</span>)&amp;mod][j+<span class="number">1</span>]+v[i+j]) + sum[i+j<span class="number">-1</span>] - sum[i<span class="number">-1</span>];</div><div class="line">                dp[<span class="number">1</span>][i&amp;mod][j] = min(dp[<span class="number">0</span>][(i+j)&amp;mod][j], dp[<span class="number">0</span>][(i+j+<span class="number">1</span>)&amp;mod][j+<span class="number">1</span>]-v[i+j]) - sum[i+j<span class="number">-1</span>] + sum[i<span class="number">-1</span>];</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="built_in">cout</span>&lt;&lt;dp[<span class="number">0</span>][<span class="number">1</span>][<span class="number">1</span>]&lt;&lt;<span class="built_in">endl</span>;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>hdu 6201 树上DP<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> node&#123;</div><div class="line">    <span class="keyword">int</span> to,cost,next;</div><div class="line">&#125;e[MAXN];</div><div class="line"><span class="keyword">int</span> head[MAXN];</div><div class="line"><span class="keyword">int</span> val[MAXN];</div><div class="line"><span class="keyword">int</span> dp[<span class="number">2</span>][MAXN];</div><div class="line"><span class="keyword">int</span> cnt = <span class="number">0</span>;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">add_edge</span><span class="params">(<span class="keyword">int</span> f,<span class="keyword">int</span> t,<span class="keyword">int</span> c)</span></span></div><div class="line">&#123;</div><div class="line">    e[cnt].to = t;</div><div class="line">    e[cnt].cost = c;</div><div class="line">    e[cnt].next = head[f];</div><div class="line">    head[f] = cnt;</div><div class="line">    cnt++;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">dfs</span><span class="params">(<span class="keyword">int</span> u,<span class="keyword">int</span> pre)</span></span></div><div class="line">&#123;</div><div class="line">    dp[<span class="number">0</span>][u] = -val[u];</div><div class="line">    dp[<span class="number">1</span>][u] = val[u];</div><div class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i=head[u]; i!=<span class="number">-1</span>; i=e[i].next)&#123;</div><div class="line">        <span class="keyword">int</span> v = e[i].to;</div><div class="line">        <span class="keyword">int</span> cost = e[i].cost;</div><div class="line">        <span class="keyword">if</span>(pre==v) <span class="keyword">continue</span>;</div><div class="line">        dfs(v,u);</div><div class="line">        dp[<span class="number">0</span>][u] = max(dp[<span class="number">0</span>][u],dp[<span class="number">0</span>][v]-cost);</div><div class="line">        dp[<span class="number">1</span>][u] = max(dp[<span class="number">1</span>][u],dp[<span class="number">1</span>][v]-cost);</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">int</span> t,n;</div><div class="line">    sc(t);</div><div class="line">    <span class="keyword">while</span>(t--)&#123;</div><div class="line">        sc(n);</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">1</span>; i&lt;=n; i++) sc(val[i]);</div><div class="line">        <span class="built_in">memset</span>(head,<span class="number">-1</span>,<span class="keyword">sizeof</span>(head));</div><div class="line">        <span class="built_in">memset</span>(dp,<span class="number">0</span>,<span class="keyword">sizeof</span>(dp));</div><div class="line">        cnt = <span class="number">0</span>;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">1</span>; i&lt;n; i++)&#123;</div><div class="line">            <span class="keyword">int</span> f,t,c;</div><div class="line">            sc(f);  sc(t); sc(c);</div><div class="line">            add_edge(f,t,c);</div><div class="line">            add_edge(t,f,c);</div><div class="line">        &#125;</div><div class="line">        dfs(<span class="number">1</span>,<span class="number">-1</span>);</div><div class="line">        <span class="keyword">int</span> ans = <span class="number">0</span>;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">1</span>; i&lt;=n; i++)&#123;</div><div class="line">            ans = max(ans,dp[<span class="number">0</span>][i]+dp[<span class="number">1</span>][i]);</div><div class="line">        &#125;</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"%d\n"</span>,ans);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1731,8 +1781,8 @@
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/cat.jpg"
-               alt="muchenli" />
-          <p class="site-author-name" itemprop="name">muchenli</p>
+               alt="JonassenLi" />
+          <p class="site-author-name" itemprop="name">JonassenLi</p>
            
               <p class="site-description motion-element" itemprop="description">salty fish jojo23333's personal page</p>
           
@@ -1742,7 +1792,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">30</span>
+                <span class="site-state-item-count">32</span>
                 <span class="site-state-item-name">Artikel</span>
               </a>
             </div>
@@ -1753,7 +1803,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-count">4</span>
                 <span class="site-state-item-name">Kategorien</span>
               </a>
             </div>
@@ -1764,7 +1814,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-count">33</span>
                 <span class="site-state-item-name">Tags</span>
               </a>
             </div>
@@ -1821,7 +1871,7 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">muchenli</span>
+  <span class="author" itemprop="copyrightHolder">JonassenLi</span>
 </div>
 
 
