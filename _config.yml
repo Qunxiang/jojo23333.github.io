@@ -4,9 +4,9 @@
 
 # Site
 title: JonassenLi
-subtitle:
+subtitle: LMC's Notebook
 description: salty fish jojo23333's personal page
-author: muchenli
+author: JonassenLi
 avatar: /images/cat.jpg
 language:
 timezone:
@@ -35,7 +35,7 @@ titlecase: false # Transform title into titlecase
 external_link: true # Open external links in new tab
 filename_case: 0
 render_drafts: false
-post_asset_folder: false
+post_asset_folder: true
 relative_link: false
 future: true
 highlight:
@@ -69,6 +69,7 @@ pagination_dir: page
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
+#theme: hexo-theme-aircloud
 theme: next
 
 # Deployment
@@ -78,3 +79,76 @@ deploy:
   repo: git@github.com:jojo23333/jojo23333.github.io.git  
   branch: master
   messge: "{{ now('YYYY-MM-DD HH:mm:ss') }}"
+  
+# sidebar support for archer
+jsonContent:
+  meta: true
+  pages: false
+  posts:
+    title: true
+    date: true
+    path: true
+    text: false
+    raw: false
+    content: false
+    slug: false
+    updated: false
+    comments: false
+    link: false
+    permalink: true
+    excerpt: false
+    categories: true
+    tags: true
+
+# config for hexo-theme-aircloud
+# The following content is not recommended to modify
+# 搜索数据文件路径设置，不建议改动：
+search:
+  path: search.json
+  field: post
+
+# 文章样式(是否首行缩进)：
+post_style:
+  indent: false
+ 
+ # Site settings
+# 网站综合内容设置：
+SEOTitle: Muchen's Blog
+header-img: img/home-bg.jpg
+email: jonassenli97@qq.com
+keyword: 
+
+# SNS settings
+# 一些社交平台地址，支持以下几种：
+weibo_username:     
+zhihu_username:     
+github_username:    jojo23333
+twitter_username:   
+facebook_username:  
+linkedin_username:  
+
+# Build settings
+anchorjs: true                          # if you want to customize anchor. check out line:181 of `post.html`
+
+sidebar-avatar: images/cat.jpg      # use absolute URL, seeing it's used in both `/` and `/about/`
+
+# Friends
+# 友情链接
+friends: [
+    {
+        title: "部长",
+        href: "blog.codedragon.tech"
+    }
+]
+
+comment:
+  type: gitment
+  id: your-id-created-by-https://github.com/settings/applications/new
+  secret: your-secret-created-by-https://github.com/settings/applications/new
+  owner: aircloud
+  repo: hexo-aircloud-blog
+
+donate:
+  img: 
+  content: 
+

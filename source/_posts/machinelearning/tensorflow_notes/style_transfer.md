@@ -24,7 +24,7 @@ A Neural Algorithm of Artistic Style 这篇文章发表2016，还算比较新的
 
 VGGnet的网络参数如图所示  
 
-![VGGNet achitecture](./images/tf/VGGNet.png)
+![VGGNet achitecture](/images/tf/VGGNet.png)
 
 ### 基于VGGnet 的实现
 文章使用了VGGNet当中的16层卷积层和5层pooling层,去掉了全连接层，并使用average pooling策略替换max pooling策略
